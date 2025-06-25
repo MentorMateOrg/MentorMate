@@ -1,6 +1,23 @@
-// Welcome.jsx
+import { useNavigate } from "react-router-dom";
+import logo from '../assets/images/MentorMateLogo.jpg'
+
+
+
 function Welcome() {
-    return <h1>Welcome to the app! 🎉</h1>;
+
+    const navigate = useNavigate();
+    function handleSignUp() {
+        navigate('/signup');
+    }
+
+    function handleLogIn() {
+        navigate('/login');
+    }
+    return <>
+    <h1>Welcome to MentorMate! 🎉</h1>
+    <button onClick={handleSignUp}>Sign Up</button>
+    <button onClick={handleLogIn}>Log In</button>
+    </>
   }
 
   export default Welcome;
