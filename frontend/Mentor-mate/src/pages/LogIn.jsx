@@ -1,29 +1,26 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Onboarding from "./Onboarding";
 import Navbar from "../components/Navbar";
 
-function SignUp() {
+function LogIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const navigate = useNavigate();
 
-  const handleSignUp = async (form) => {
+  const handleLogIn = async (form) => {
     form.preventDefault();
 
-    const response = await fetch("http://localhost:5000/api/signup", {
+    const response = await fetch("http://localhost:5000/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email, plainPassword: password }),
     });
     const user = await response.json();
     if (response.ok) {
-      const token = user.token;
-      localStorage.setItem("token", token);
-      navigate("/onboarding");
+      alert("You are logged in!");
     } else {
-      alert("Error signing up: ");
+      alert("You are not registered! Please sign up");
     }
     setEmail("");
     setPassword("");
@@ -34,8 +31,8 @@ function SignUp() {
       <Navbar />
       <div className="flex items-center justify-center min-h-screen">
         <div className="">
-          <form onSubmit={handleSignUp}>
-            <h1 className="mb-4">Sign Up</h1>
+          <form onSubmit={handleLogIn}>
+            <h1 className="mb-4">Log In</h1>
             <div>
               <input
                 type="email"
@@ -54,7 +51,7 @@ function SignUp() {
                 className="p-2 m-2 border border-gray-300"
               />
             </div>
-            <button className="mt-4">Sign Up</button>
+            <button className="mt-4">Log In</button>
           </form>
         </div>
       </div>
@@ -62,4 +59,4 @@ function SignUp() {
   );
 }
 
-export default SignUp;
+export default LogIn;
