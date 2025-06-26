@@ -1,23 +1,22 @@
 import { useNavigate } from "react-router-dom";
-import logo from '../assets/images/MentorMateLogo.jpg'
-
-
+import logo from "../assets/images/MentorMateLogo.jpg";
 
 function Welcome() {
-
-    const navigate = useNavigate();
-    function handleSignUp() {
-        navigate('/signup');
-    }
-
-    function handleLogIn() {
-        navigate('/login');
-    }
-    return <>
-    <h1>Welcome to MentorMate! 🎉</h1>
-    <button onClick={handleSignUp}>Sign Up</button>
-    <button onClick={handleLogIn}>Log In</button>
-    </>
+  const navigate = useNavigate();
+  function handleSignUp() {
+    navigate("/signup");
   }
 
-  export default Welcome;
+  function handleLogIn() {
+    navigate("/login");
+  }
+  return (
+    <>
+      <h1>Welcome to MentorMate! 🎉</h1>
+      <button onClick={handleSignUp}>Sign Up</button>
+      <button onClick={handleLogIn}>Log In</button>
+    </>
+  );
+}
+
+export default Welcome;

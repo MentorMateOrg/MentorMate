@@ -32,7 +32,7 @@ model Profile {
   userId Int @unique
   full_name String
   role Role @default(MENTEE)
-  profilePic String
+  profilePicUrl String?
   github_url String
   linkedin_url String
   created_at DateTime @default(now())
