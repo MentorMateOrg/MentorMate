@@ -31,7 +31,7 @@ function SignUp() {
 
   return (
     <>
-      <Navbar />
+    
       <div className="flex items-center justify-center min-h-screen">
         <div className="">
           <form onSubmit={handleSignUp}>

@@ -18,7 +18,7 @@ function LogIn() {
     });
     const user = await response.json();
     if (response.ok) {
-      alert("You are logged in!");
+      navigate("/dashboard")
     } else {
       alert("You are not registered! Please sign up");
     }
@@ -28,7 +28,6 @@ function LogIn() {
 
   return (
     <>
-      <Navbar />
       <div className="flex items-center justify-center min-h-screen">
         <div className="">
           <form onSubmit={handleLogIn}>
