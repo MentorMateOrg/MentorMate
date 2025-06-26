@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
 
 function LogIn() {
   const [email, setEmail] = useState("");
@@ -19,7 +20,7 @@ function LogIn() {
     if (response.ok) {
       alert("You are logged in!");
     } else {
-      alert("Error signing up: ");
+      alert("You are not registered! Please sign up");
     }
     setEmail("");
     setPassword("");
@@ -27,22 +28,33 @@ function LogIn() {
 
   return (
     <>
-      <form onSubmit={handleLogIn}>
-        <h1>Log in</h1>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-        />
-        <button>Log in</button>
-      </form>
+      <Navbar />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="">
+          <form onSubmit={handleLogIn}>
+            <h1 className="mb-4">Log In</h1>
+            <div>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+                className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+              />
+            </div>
+            <div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                className="p-2 m-2 border border-gray-300"
+              />
+            </div>
+            <button className="mt-4">Log In</button>
+          </form>
+        </div>
+      </div>
     </>
   );
 }

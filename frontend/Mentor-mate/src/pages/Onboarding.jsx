@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
 
 const Onboarding = () => {
   const [fullName, setFullName] = useState("");
@@ -41,41 +42,61 @@ const Onboarding = () => {
   };
   return (
     <>
-      <div>
-        <form onSubmit={handleOnboarding}>
-          <h2>Onboarding</h2>
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Full Name"
-          />
-          <input
-            type="text"
-            value={profilePicUrl}
-            onChange={(e) => setProfilePicUrl(e.target.value)}
-            placeholder="Profile Picture URL"
-          />
-          <input
-            type="text"
-            value={linkedInUrl}
-            onChange={(e) => setLinkedInUrl(e.target.value)}
-            placeholder="LinkedIn URL"
-          />
-          <input
-            type="text"
-            value={githubUrl}
-            onChange={(e) => setGithubUrl(e.target.value)}
-            placeholder="Github URL"
-          />
-          <input
-            type="text"
-            value={techStack}
-            onChange={(e) => setTechStack(e.target.value)}
-            placeholder="Tech Stack"
-          />
-          <button type="submit">Submit</button>
-        </form>
+      <Navbar />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="">
+          <div>
+            <form onSubmit={handleOnboarding}>
+              <h1 className="mb-4">Onboarding</h1>
+              <div>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Full Name"
+                  className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={profilePicUrl}
+                  onChange={(e) => setProfilePicUrl(e.target.value)}
+                  placeholder="Profile Picture URL"
+                  className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={linkedInUrl}
+                  onChange={(e) => setLinkedInUrl(e.target.value)}
+                  placeholder="LinkedIn URL"
+                  className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  placeholder="Github URL"
+                  className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={techStack}
+                  onChange={(e) => setTechStack(e.target.value)}
+                  placeholder="Tech Stack"
+                  className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+                />
+              </div>
+              <button type="submit">Submit</button>
+            </form>
+          </div>
+        </div>
       </div>
     </>
   );
