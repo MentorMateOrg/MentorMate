@@ -11,19 +11,22 @@ function SignUp() {
 
   const handleSignUp = async (form) => {
     form.preventDefault();
-
-    const response = await fetch("http://localhost:5000/api/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email, plainPassword: password }),
-    });
-    const user = await response.json();
-    if (response.ok) {
-      const token = user.token;
-      localStorage.setItem("token", token);
-      navigate("/onboarding");
-    } else {
-      alert("Error signing up: ");
+    try {
+      const response = await fetch("http://localhost:5000/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email, plainPassword: password }),
+      });
+      const user = await response.json();
+      if (response.ok) {
+        const token = user.token;
+        localStorage.setItem("token", token);
+        navigate("/roleselect");
+      } else {
+        alert("Error signing up");
+      }
+    } catch (err) {
+      throw err;
     }
     setEmail("");
     setPassword("");
@@ -31,7 +34,6 @@ function SignUp() {
 
   return (
     <>
-    
       <div className="flex items-center justify-center min-h-screen">
         <div className="">
           <form onSubmit={handleSignUp}>

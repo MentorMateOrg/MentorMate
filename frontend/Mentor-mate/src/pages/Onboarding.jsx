@@ -12,6 +12,8 @@ const Onboarding = () => {
 
   const navigate = useNavigate();
 
+  const role = localStorage.getItem("role");
+
   const handleOnboarding = async (onboarding) => {
     onboarding.preventDefault();
     const token = localStorage.getItem("token");
@@ -27,7 +29,7 @@ const Onboarding = () => {
       },
       body: JSON.stringify({
         fullName: fullName,
-        role: "MENTEE",
+        role: role,
         profilePicUrl: profilePicUrl,
         linkedInUrl: linkedInUrl,
         githubUrl: githubUrl,
@@ -41,60 +43,126 @@ const Onboarding = () => {
       alert("Error onboarding user");
     }
   };
+
+  function renderMenteeOnboarding() {
+    return (
+      <>
+        <form onSubmit={handleOnboarding}>
+          <h1 className="mb-4">Onboarding for Mentees</h1>
+          <div>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Full Name"
+              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={profilePicUrl}
+              onChange={(e) => setProfilePicUrl(e.target.value)}
+              placeholder="Profile Picture URL"
+              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={linkedInUrl}
+              onChange={(e) => setLinkedInUrl(e.target.value)}
+              placeholder="LinkedIn URL"
+              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={githubUrl}
+              onChange={(e) => setGithubUrl(e.target.value)}
+              placeholder="Github URL"
+              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={techStack}
+              onChange={(e) => setTechStack(e.target.value)}
+              placeholder="Tech Stack"
+              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+            />
+          </div>
+          <button type="submit">Submit</button>
+        </form>
+      </>
+    );
+  }
+
+  function renderMentorOnboarding() {
+    return (
+      <>
+        <form onSubmit={handleOnboarding}>
+          <h1>Onboarding for Mentors</h1>
+          <div>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Full Name"
+              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={profilePicUrl}
+              onChange={(e) => setProfilePicUrl(e.target.value)}
+              placeholder="Profile Picture URL"
+              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={linkedInUrl}
+              onChange={(e) => setLinkedInUrl(e.target.value)}
+              placeholder="LinkedIn URL"
+              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={githubUrl}
+              onChange={(e) => setGithubUrl(e.target.value)}
+              placeholder="Github URL"
+              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={techStack}
+              onChange={(e) => setTechStack(e.target.value)}
+              placeholder="Tech Stack"
+              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
+            />
+          </div>
+          <button type="submit">Submit</button>
+        </form>
+      </>
+    );
+  }
   return (
     <>
       <div className="flex items-center justify-center min-h-screen">
         <div className="">
           <div>
-            <form onSubmit={handleOnboarding}>
-              <h1 className="mb-4">Onboarding</h1>
-              <div>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Full Name"
-                  className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  value={profilePicUrl}
-                  onChange={(e) => setProfilePicUrl(e.target.value)}
-                  placeholder="Profile Picture URL"
-                  className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  value={linkedInUrl}
-                  onChange={(e) => setLinkedInUrl(e.target.value)}
-                  placeholder="LinkedIn URL"
-                  className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  value={githubUrl}
-                  onChange={(e) => setGithubUrl(e.target.value)}
-                  placeholder="Github URL"
-                  className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  value={techStack}
-                  onChange={(e) => setTechStack(e.target.value)}
-                  placeholder="Tech Stack"
-                  className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-                />
-              </div>
-              <button type="submit">Submit</button>
-            </form>
+            {role === "MENTEE"
+              ? renderMenteeOnboarding()
+              : renderMentorOnboarding()}
           </div>
         </div>
       </div>
