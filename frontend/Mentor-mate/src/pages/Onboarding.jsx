@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Dashboard from "./Dashboard";
 
 const Onboarding = () => {
   const [fullName, setFullName] = useState("");
@@ -35,14 +36,13 @@ const Onboarding = () => {
     });
     const user = await response.json();
     if (response.ok) {
-      alert("You are logged in!");
+      navigate("/dashboard");
     } else {
-      alert("Error signing up: because of whatever reason");
+      alert("Error onboarding user");
     }
   };
   return (
     <>
-      <Navbar />
       <div className="flex items-center justify-center min-h-screen">
         <div className="">
           <div>
