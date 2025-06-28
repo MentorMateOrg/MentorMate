@@ -32,8 +32,9 @@ model Profile {
   userId Int @unique
   full_name String
   role Role @default(MENTEE)
-  profilePicUrl String?
+  profilePicUrl String? @default("https://static.vecteezy.com/system/resources/previews/055/581/121/non_2x/default-profile-picture-icon-avatar-photo-placeholder-illustration-vector.jpg")
   github_url String
+  position String?
   linkedin_url String
   created_at DateTime @default(now())
   updated_at DateTime @default(now())

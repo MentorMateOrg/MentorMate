@@ -18,7 +18,7 @@ function LogIn() {
     });
     const user = await response.json();
     if (response.ok) {
-      navigate("/dashboard")
+      navigate("/dashboard");
     } else {
       alert("You are not registered! Please sign up");
     }

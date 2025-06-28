@@ -22,10 +22,87 @@ const Dashboard = () => {
   return (
     <>
       <Navbar handleLogOut={handleLogOut} />
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded shadow-md w-96 text-center">
-          <h2 className="text-2xl font-bold mb-6">Welcome to MentorMate!</h2>
-          <p>This is your dashboard. More features coming soon</p>
+      <div className=" bg-gray-100 p-8 min-h-screen">
+        <div className="flex justify-center ">
+          <input
+            type="text"
+            placeholder="Search for a mentor"
+            className="bg-gray-50 border border-gray-300 text-gray-900 py-2 px-4 rounded-lg focus:outline-blue-300 w-1/3 mb-4"
+          />
+        </div>
+        <div className="flex justify-center items-center">
+          <div className="bg-white p-8 rounded shadow-md w-1/3 text-center m-4 h-80">
+            <h2 className="text-2xl font-bold mb-6">
+              Recommended Mentors/Mentees
+            </h2>
+            <ul className="text-blue-800 ">
+              <li>
+                <a href="#">Vidushi Seth</a>
+              </li>
+              <li>
+                <a href="#">Eva Garces</a>
+              </li>
+              <li>
+                <a href="#">Yi Shang</a>
+              </li>
+              <li>
+                <a href="#">Mark Zuckerberg</a>
+              </li>
+              <li>
+                <a href="#">Bill Gates</a>
+              </li>
+            </ul>
+          </div>
+          <div className="bg-white p-8 rounded shadow-md w-1/3 text-center m-4 h-80">
+            <h2 className="text-2xl font-bold mb-6">Todos</h2>
+            <ul>
+              <li>Set up 1:1 with mentor</li>
+              <li>Set up 1:1 with mentee</li>
+              <li>Set up 1:1 with mentor</li>
+              <li>Set up 1:1 with mentee</li>
+            </ul>
+          </div>
+          <div className="bg-white p-8 rounded shadow-md w-1/3 text-center m-4 h-80">
+            <h2 className="text-2xl font-bold mb-6">Community Engagements</h2>
+            <p>Community Engagments will be shown here</p>
+          </div>
+        </div>
+        <div className="flex justify-center items-center">
+          <div className="bg-white p-8 rounded shadow-md w-1/3 text-center m-4 h-80">
+            <h2 className="text-2xl font-bold mb-6">
+              Recommended Mentors/Mentees
+            </h2>
+            <ul className="text-blue-800 ">
+              <li>
+                <a href="#">Vidushi Seth</a>
+              </li>
+              <li>
+                <a href="#">Eva Garces</a>
+              </li>
+              <li>
+                <a href="#">Yi Shang</a>
+              </li>
+              <li>
+                <a href="#">Mark Zuckerberg</a>
+              </li>
+              <li>
+                <a href="#">Bill Gates</a>
+              </li>
+            </ul>
+          </div>
+          <div className="bg-white p-8 rounded shadow-md w-1/3 text-center m-4 h-80">
+            <h2 className="text-2xl font-bold mb-6">Todos</h2>
+            <ul>
+              <li>Set up 1:1 with mentor</li>
+              <li>Set up 1:1 with mentee</li>
+              <li>Set up 1:1 with mentor</li>
+              <li>Set up 1:1 with mentee</li>
+            </ul>
+          </div>
+          <div className="bg-white p-8 rounded shadow-md w-1/3 text-center m-4 h-80">
+            <h2 className="text-2xl font-bold mb-6">Community Engagements</h2>
+            <p>Community Engagments will be shown here</p>
+          </div>
         </div>
       </div>
       {showLogoutModal && (
