@@ -34,7 +34,7 @@ function SignUp({ stepper }) {
 
   return (
     <>
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center bg-gradient-to-br from-purple-50 to-white justify-center min-h-screen bg-gray-50">
         <div className="bg-white shadow-lg rounded-xl px-8 py-10 w-full max-w-md">
           <form onSubmit={handleSignUp}>
             <h1 className="mb-4 text-2xl font-bold text-center">

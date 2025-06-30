@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import SearchBox from "../components/SearchBox";
 
 const Dashboard = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -24,11 +25,7 @@ const Dashboard = () => {
       <Navbar handleLogOut={handleLogOut} />
       <div className=" bg-gray-100 p-8 min-h-screen">
         <div className="flex justify-center ">
-          <input
-            type="text"
-            placeholder="Search for a mentor"
-            className="bg-gray-50 border border-gray-300 text-gray-900 py-2 px-4 rounded-lg focus:outline-blue-300 w-1/3 mb-4"
-          />
+          <SearchBox />
         </div>
         <div className="flex justify-center items-center">
           <div className="bg-white p-8 rounded shadow-md w-1/3 text-center m-4 h-80">
