@@ -10,10 +10,10 @@ import Profile from "./pages/Profile";
 import SearchResults from "./pages/SearchResults";
 
 const steps = {
-    SIGNUP: 1,
-    ROLESELECT: 2,
-    ONBOARDING: 3
-}
+  SIGNUP: 1,
+  ROLESELECT: 2,
+  ONBOARDING: 3,
+};
 
 function stepper({ step }) {
   return (
@@ -23,7 +23,9 @@ function stepper({ step }) {
         <div key={key} className="flex iems-center">
           <div
             className={`z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg border-2 ${
-              step === value ? "bg-purple-600 text-white" : "bg-white text-gray-300"
+              step === value
+                ? "bg-purple-600 text-white"
+                : "bg-white text-gray-300"
             }`}
           >
             {value}
@@ -41,7 +43,7 @@ export default function PagesContainer() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/user", {
+        const response = await fetch("http://localhost:5000/api/users/me", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -65,8 +67,16 @@ export default function PagesContainer() {
       <Router>
         <Routes>
           <Route path="/" element={<Welcome />} />
-          <Route path="/signup" element={<SignUp stepper={() => stepper({step: steps.SIGNUP})} />} />
-          <Route path="/login" element={<LogIn stepper={() => stepper({step: steps.ONBOARDING})} />} />
+          <Route
+            path="/signup"
+            element={<SignUp stepper={() => stepper({ step: steps.SIGNUP })} />}
+          />
+          <Route
+            path="/login"
+            element={
+              <LogIn stepper={() => stepper({ step: steps.ONBOARDING })} />
+            }
+          />
           <Route
             path="/onboarding"
             element={<Onboarding role={role} setRole={setRole} />}
@@ -75,11 +85,18 @@ export default function PagesContainer() {
           <Route
             path="/roleselect"
             element={
-              <RoleSelect stepper={() => stepper({step: steps.ROLESELECT})} role={role} setRole={setRole} />
+              <RoleSelect
+                stepper={() => stepper({ step: steps.ROLESELECT })}
+                role={role}
+                setRole={setRole}
+              />
             }
           />
           <Route path="/search-results" element={<SearchResults />} />
-          <Route path="/profile" element={<Profile user = {user}/>} />
+          <Route
+            path="/profile"
+            element={<Profile user={user} setUser={setUser} />}
+          />
         </Routes>
       </Router>
     </>
