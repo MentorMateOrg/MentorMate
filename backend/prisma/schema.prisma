@@ -17,7 +17,6 @@ datasource db {
 enum Role{
   MENTEE
   MENTOR
-  UNKNOWN
 }
 model User {
   id Int @id @default(autoincrement())
@@ -34,7 +33,7 @@ model Profile {
   user User @relation(fields: [userId], references: [id])
   userId Int @unique
   full_name String
-  role Role
+  role Role @default(MENTEE)
   profilePicUrl String? @default("https://static.vecteezy.com/system/resources/previews/055/581/121/non_2x/default-profile-picture-icon-avatar-photo-placeholder-illustration-vector.jpg")
   githubUrl String?
   fieldOfKnowledge String?

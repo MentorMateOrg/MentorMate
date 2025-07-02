@@ -86,14 +86,12 @@ app.post("/api/onboarding", authenticateToken, async (req, res) => {
       experiences,
     } = req.body;
 
-    const userRole = role || "UNKNOWN";
-
     if (findUserProfile) {
       const updatedProfile = await prisma.profile.update({
         where: { userId: req.user.id },
         data: {
           full_name: fullName,
-          role: userRole,
+          role: role || "MENTEE",
           profilePicUrl: profilePicUrl,
           githubUrl: githubUrl,
           linkedinUrl: linkedInUrl,
@@ -109,7 +107,7 @@ app.post("/api/onboarding", authenticateToken, async (req, res) => {
       const newProfile = await prisma.profile.create({
         data: {
           full_name: fullName,
-          role: userRole,
+          role: role || "MENTEE",
           profilePicUrl: profilePicUrl,
           githubUrl: githubUrl,
           linkedinUrl: linkedInUrl,

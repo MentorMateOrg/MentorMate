@@ -11,7 +11,6 @@ const Onboarding = ({ role, setRole }) => {
   const [profilePicUrl, setProfilePicUrl] = useState("");
   const [fieldOfKnowledge, setFieldOfKnowledge] = useState("");
   const [experiences, setExperiences] = useState([]);
-  const [selectedRole, setSelectedRole] = useState(role || "UNKNOWN");
 
   const navigate = useNavigate();
 
@@ -34,7 +33,7 @@ const Onboarding = ({ role, setRole }) => {
       },
       body: JSON.stringify({
         fullName: fullName,
-        role: selectedRole,
+        role: role,
         profilePicUrl: profilePicUrl,
         linkedInUrl: linkedInUrl,
         githubUrl: githubUrl,
@@ -124,15 +123,12 @@ const Onboarding = ({ role, setRole }) => {
                 <label className="block text-sm font-medium text-gray-700">
                   Role
                 </label>
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
+                <input
+                  type="text"
+                  value="MENTEE"
                   className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                >
-                  <option value="UNKNOWN">Select Role</option>
-                  <option value="MENTEE">Mentee</option>
-                  <option value="MENTOR">Mentor</option>
-                </select>
+                  readOnly
+                />
               </div>
               <button
                 type="submit"
@@ -232,15 +228,12 @@ const Onboarding = ({ role, setRole }) => {
                 <label className="block text-sm font-medium text-gray-700">
                   Role
                 </label>
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
+                <input
+                  type="text"
+                  value="MENTOR"
                   className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                >
-                  <option value="UNKNOWN">Select Role</option>
-                  <option value="MENTEE">Mentee</option>
-                  <option value="MENTOR">Mentor</option>
-                </select>
+                  readOnly
+                />
               </div>
               <button
                 type="submit"
