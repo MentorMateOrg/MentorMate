@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SignUp from "./pages/SignUp";
 import Welcome from "./pages/Welcome";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -9,18 +9,24 @@ import RoleSelect from "./pages/RoleSelect.";
 import Profile from "./pages/Profile";
 import SearchResults from "./pages/SearchResults";
 
+const steps = {
+    SIGNUP: 1,
+    ROLESELECT: 2,
+    ONBOARDING: 3
+}
+
 function stepper({ step }) {
   return (
     <div className="relative flex justify-around mb-8">
       <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-600 z-0" />
-      {[1, 2, 3].map((s) => (
-        <div key={s} className="flex iems-center">
+      {Object.entries(steps).map(([key, value]) => (
+        <div key={key} className="flex iems-center">
           <div
             className={`z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg border-2 ${
-              step === s ? "bg-purple-600 text-white" : "bg-white text-gray-300"
+              step === value ? "bg-purple-600 text-white" : "bg-white text-gray-300"
             }`}
           >
-            {s}
+            {value}
           </div>
         </div>
       ))}
@@ -30,14 +36,37 @@ function stepper({ step }) {
 
 export default function PagesContainer() {
   const [role, setRole] = useState("");
+  const [user, setUser] = useState("");
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/user", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setUser(data);
+        } else {
+          alert("Error fetching user data");
+        }
+      } catch (err) {
+        alert("Error fetching user data");
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   return (
     <>
       <Router>
         <Routes>
           <Route path="/" element={<Welcome />} />
-          <Route path="/signup" element={<SignUp stepper={stepper} />} />
-          <Route path="/login" element={<LogIn stepper={stepper} />} />
+          <Route path="/signup" element={<SignUp stepper={() => stepper({step: steps.SIGNUP})} />} />
+          <Route path="/login" element={<LogIn stepper={() => stepper({step: steps.ONBOARDING})} />} />
           <Route
             path="/onboarding"
             element={<Onboarding role={role} setRole={setRole} />}
@@ -46,11 +75,11 @@ export default function PagesContainer() {
           <Route
             path="/roleselect"
             element={
-              <RoleSelect stepper={stepper} role={role} setRole={setRole} />
+              <RoleSelect stepper={() => stepper({step: steps.ROLESELECT})} role={role} setRole={setRole} />
             }
           />
           <Route path="/search-results" element={<SearchResults />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<Profile user = {user}/>} />
         </Routes>
       </Router>
     </>

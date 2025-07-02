@@ -10,9 +10,13 @@ const Onboarding = ({ role, setRole }) => {
   const [techStack, setTechStack] = useState("");
   const [profilePicUrl, setProfilePicUrl] = useState("");
   const [fieldOfKnowledge, setFieldOfKnowledge] = useState("");
-  const [position, setPosition] = useState("");
+  const [experiences, setExperiences] = useState([]);
 
   const navigate = useNavigate();
+
+  const handleExperienceChange = (e) => {
+    setExperiences(e.target.value.split(",").map((exp) => exp.trim()));
+  };
 
   const handleOnboarding = async (onboarding) => {
     onboarding.preventDefault();
@@ -34,7 +38,7 @@ const Onboarding = ({ role, setRole }) => {
         linkedInUrl: linkedInUrl,
         githubUrl: githubUrl,
         fieldOfKnowledge: fieldOfKnowledge,
-        position: position,
+        experiences: experiences,
         interests: techStack.split(",").map((interest) => interest.trim()),
       }),
     });
@@ -174,12 +178,12 @@ const Onboarding = ({ role, setRole }) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Position
+                  Experiences
                 </label>
                 <input
                   type="text"
-                  value={position}
-                  onChange={(e) => setPosition(e.target.value)}
+                  value={experiences.join(", ")}
+                  onChange={handleExperienceChange}
                   placeholder="AI Engineer, Tech Program Manager, etc."
                   className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 />

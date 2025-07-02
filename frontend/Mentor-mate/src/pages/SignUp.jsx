@@ -26,7 +26,7 @@ function SignUp({ stepper }) {
         alert("Error signing up");
       }
     } catch (err) {
-      throw err;
+      alert("Sign up error: ", err);
     }
     setEmail("");
     setPassword("");
@@ -46,7 +46,7 @@ function SignUp({ stepper }) {
                 Log in
               </a>
             </p>
-            {stepper({ step: 1 })}
+            {stepper()}
             <div>
               <label htmlFor="email" className="block font-semibold mb-2">
                 Email Address
