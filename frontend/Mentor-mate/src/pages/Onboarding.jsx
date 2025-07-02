@@ -3,16 +3,21 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Dashboard from "./Dashboard";
 
-const Onboarding = () => {
+const Onboarding = ({ role, setRole }) => {
   const [fullName, setFullName] = useState("");
   const [linkedInUrl, setLinkedInUrl] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [techStack, setTechStack] = useState("");
   const [profilePicUrl, setProfilePicUrl] = useState("");
+  const [fieldOfKnowledge, setFieldOfKnowledge] = useState("");
+  const [experiences, setExperiences] = useState([]);
+  const [selectedRole, setSelectedRole] = useState(role || "UNKNOWN");
 
   const navigate = useNavigate();
 
-  const role = localStorage.getItem("role");
+  const handleExperienceChange = (e) => {
+    setExperiences(e.target.value.split(",").map((exp) => exp.trim()));
+  };
 
   const handleOnboarding = async (onboarding) => {
     onboarding.preventDefault();
@@ -29,10 +34,12 @@ const Onboarding = () => {
       },
       body: JSON.stringify({
         fullName: fullName,
-        role: role,
+        role: selectedRole,
         profilePicUrl: profilePicUrl,
         linkedInUrl: linkedInUrl,
         githubUrl: githubUrl,
+        fieldOfKnowledge: fieldOfKnowledge,
+        experiences: experiences,
         interests: techStack.split(",").map((interest) => interest.trim()),
       }),
     });
@@ -47,55 +54,95 @@ const Onboarding = () => {
   function renderMenteeOnboarding() {
     return (
       <>
-        <form onSubmit={handleOnboarding}>
-          <h1 className="mb-4">Onboarding for Mentees</h1>
-          <div>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Full Name"
-              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-            />
+        <div className="min-h-screen flex items-center justify-center px-6">
+          <div className="w-full max-w-xl bg-white shadow-lg rounded-xl p-8">
+            <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
+              Onboarding for Mentees
+            </h1>
+            <form onSubmit={handleOnboarding} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Your Full Name"
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Profile Picture URL
+                </label>
+                <input
+                  type="text"
+                  value={profilePicUrl}
+                  onChange={(e) => setProfilePicUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  LinkedIn URL
+                </label>
+                <input
+                  type="text"
+                  value={linkedInUrl}
+                  onChange={(e) => setLinkedInUrl(e.target.value)}
+                  placeholder="https://linkedin.com/in/yourname"
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Github URL
+                </label>
+                <input
+                  type="text"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  placeholder="https://github.com/yourname"
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Tech Stack
+                </label>
+                <input
+                  type="text"
+                  value={techStack}
+                  onChange={(e) => setTechStack(e.target.value)}
+                  placeholder="React, Node.js, Python"
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Role
+                </label>
+                <select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                >
+                  <option value="UNKNOWN">Select Role</option>
+                  <option value="MENTEE">Mentee</option>
+                  <option value="MENTOR">Mentor</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-purple-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-purple-700 transition cursor-pointer"
+              >
+                Complete Onboarding
+              </button>
+            </form>
           </div>
-          <div>
-            <input
-              type="text"
-              value={profilePicUrl}
-              onChange={(e) => setProfilePicUrl(e.target.value)}
-              placeholder="Profile Picture URL"
-              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={linkedInUrl}
-              onChange={(e) => setLinkedInUrl(e.target.value)}
-              placeholder="LinkedIn URL"
-              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={githubUrl}
-              onChange={(e) => setGithubUrl(e.target.value)}
-              placeholder="Github URL"
-              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={techStack}
-              onChange={(e) => setTechStack(e.target.value)}
-              placeholder="Tech Stack"
-              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-            />
-          </div>
-          <button type="submit">Submit</button>
-        </form>
+        </div>
       </>
     );
   }
@@ -103,55 +150,107 @@ const Onboarding = () => {
   function renderMentorOnboarding() {
     return (
       <>
-        <form onSubmit={handleOnboarding}>
-          <h1>Onboarding for Mentors</h1>
-          <div>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Full Name"
-              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-            />
+        <div className="min-h-screen flex items-center justify-center px-6">
+          <div className="w-full max-w-xl bg-white shadow-lg rounded-xl p-8">
+            <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
+              Onboarding for Mentors
+            </h1>
+            <form onSubmit={handleOnboarding} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Your Full Name"
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Field of Knowledge
+                </label>
+                <input
+                  type="text"
+                  value={fieldOfKnowledge}
+                  onChange={(e) => setFieldOfKnowledge(e.target.value)}
+                  placeholder="Software Engineering, Data Science, etc."
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Experiences
+                </label>
+                <input
+                  type="text"
+                  value={experiences.join(", ")}
+                  onChange={handleExperienceChange}
+                  placeholder="AI Engineer, Tech Program Manager, etc."
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Profile Picture URL
+                </label>
+                <input
+                  type="text"
+                  value={profilePicUrl}
+                  onChange={(e) => setProfilePicUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  LinkedIn URL
+                </label>
+                <input
+                  type="text"
+                  value={linkedInUrl}
+                  onChange={(e) => setLinkedInUrl(e.target.value)}
+                  placeholder="https://linkedin.com/in/yourname"
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Tech Stack
+                </label>
+                <input
+                  type="text"
+                  value={techStack}
+                  onChange={(e) => setTechStack(e.target.value)}
+                  placeholder="React, Node.js, Python"
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Role
+                </label>
+                <select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  className="mt-1 w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                >
+                  <option value="UNKNOWN">Select Role</option>
+                  <option value="MENTEE">Mentee</option>
+                  <option value="MENTOR">Mentor</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-purple-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-purple-700 transition cursor-pointer"
+              >
+                Complete Onboarding
+              </button>
+            </form>
           </div>
-          <div>
-            <input
-              type="text"
-              value={profilePicUrl}
-              onChange={(e) => setProfilePicUrl(e.target.value)}
-              placeholder="Profile Picture URL"
-              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={linkedInUrl}
-              onChange={(e) => setLinkedInUrl(e.target.value)}
-              placeholder="LinkedIn URL"
-              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={githubUrl}
-              onChange={(e) => setGithubUrl(e.target.value)}
-              placeholder="Github URL"
-              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={techStack}
-              onChange={(e) => setTechStack(e.target.value)}
-              placeholder="Tech Stack"
-              className="pt-2 pb-2 pl-4 pr-4 m-2 border border-gray-300"
-            />
-          </div>
-          <button type="submit">Submit</button>
-        </form>
+        </div>
       </>
     );
   }

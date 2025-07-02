@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
+import SearchBox from "../components/SearchBox";
 
 const Dashboard = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
 
   const navigate = useNavigate();
 
@@ -18,39 +20,46 @@ const Dashboard = () => {
   function onClose() {
     setShowLogoutModal(false);
   }
+  useEffect(() => {
+    const fetcRecommendations = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/recommendations",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const data = await response.json();
+        setRecommendations(data);
+      } catch (err) {
+        alert(err);
+      }
+    };
+    fetcRecommendations();
+  }, []);
 
   return (
     <>
       <Navbar handleLogOut={handleLogOut} />
       <div className=" bg-gray-100 p-8 min-h-screen">
         <div className="flex justify-center ">
-          <input
-            type="text"
-            placeholder="Search for a mentor"
-            className="bg-gray-50 border border-gray-300 text-gray-900 py-2 px-4 rounded-lg focus:outline-blue-300 w-1/3 mb-4"
-          />
+          <SearchBox />
         </div>
         <div className="flex justify-center items-center">
           <div className="bg-white p-8 rounded shadow-md w-1/3 text-center m-4 h-80">
             <h2 className="text-2xl font-bold mb-6">
-              Recommended Mentors/Mentees
+              {recommendations.length} Recommended Mentors/Mentees
             </h2>
             <ul className="text-blue-800 ">
-              <li>
-                <a href="#">Vidushi Seth</a>
-              </li>
-              <li>
-                <a href="#">Eva Garces</a>
-              </li>
-              <li>
-                <a href="#">Yi Shang</a>
-              </li>
-              <li>
-                <a href="#">Mark Zuckerberg</a>
-              </li>
-              <li>
-                <a href="#">Bill Gates</a>
-              </li>
+              {recommendations.map((profile) => (
+                <li key={profile.id}>
+                  <h3>{profile.full_name}</h3>
+                  <p>Role: {profile.role}</p>
+                  <p>Interests: {profile.interests.join(", ")}</p>
+                </li>
+              ))}
             </ul>
           </div>
           <div className="bg-white p-8 rounded shadow-md w-1/3 text-center m-4 h-80">

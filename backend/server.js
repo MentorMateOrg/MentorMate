@@ -71,22 +71,191 @@ app.post("/api/login", async (req, res) => {
 
 app.post("/api/onboarding", authenticateToken, async (req, res) => {
   try {
-    const { fullName, role, profilePicUrl, githubUrl, linkedInUrl, interests } =
-      req.body;
-    const newProfile = await prisma.profile.create({
-      data: {
-        full_name: fullName,
-        role: role || "MENTEE",
-        profilePicUrl: profilePicUrl,
-        github_url: githubUrl,
-        linkedin_url: linkedInUrl,
-        interests: interests || [],
-        user: { connect: { id: req.user.id } },
+    const findUserProfile = await prisma.profile.findUnique({
+      where: { userId: req.user.id },
+    });
+
+    const {
+      fullName,
+      role,
+      profilePicUrl,
+      githubUrl,
+      linkedInUrl,
+      interests,
+      fieldOfKnowledge,
+      experiences,
+    } = req.body;
+
+    const userRole = role || "UNKNOWN";
+
+    if (findUserProfile) {
+      const updatedProfile = await prisma.profile.update({
+        where: { userId: req.user.id },
+        data: {
+          full_name: fullName,
+          role: userRole,
+          profilePicUrl: profilePicUrl,
+          githubUrl: githubUrl,
+          linkedinUrl: linkedInUrl,
+          interests: interests || [],
+          fieldOfKnowledge: fieldOfKnowledge || "",
+          experiences: experiences || [],
+        },
+      });
+      res
+        .status(200)
+        .json({ message: "Profile updated successfully", updatedProfile });
+    } else {
+      const newProfile = await prisma.profile.create({
+        data: {
+          full_name: fullName,
+          role: userRole,
+          profilePicUrl: profilePicUrl,
+          githubUrl: githubUrl,
+          linkedinUrl: linkedInUrl,
+          interests: interests || [],
+          fieldOfKnowledge: fieldOfKnowledge || "",
+          experiences: experiences || [],
+          user: { connect: { id: req.user.id } },
+        },
+      });
+      res
+        .status(201)
+        .json({ message: "Profile created successfully", newProfile });
+    }
+  } catch (err) {
+    alert(err);
+    res
+      .status(500)
+      .json({ message: "Something went wrong", error: err.message });
+  }
+});
+
+app.get("/api/search", authenticateToken, async (req, res) => {
+  const { query } = req.query;
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          {
+            profile: {
+              full_name: {
+                contains: query,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            profile: {
+              interests: {
+                has: query,
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        profile: true,
       },
     });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: "Something went wrong", error: err });
+  }
+});
+
+app.get("/api/recommendations", authenticateToken, async (req, res) => {
+  try {
+    const userProfile = await prisma.profile.findUnique({
+      where: { userId: req.user.id },
+    });
+
+    if (!userProfile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    const recommendations = await prisma.profile.findMany({
+      where: {
+        AND: [
+          { userId: { not: req.user.id } }, // Exclude the current user
+          {
+            interests: {
+              hasSome: userProfile.interests, // Match any of the user's interests
+            },
+          },
+          {
+            role: userProfile.role === "MENTEE" ? "MENTOR" : "MENTEE", // Recommend opposite role
+          },
+        ],
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    res.json(recommendations);
+  } catch (err) {
+    res.status(500).json({ message: "Something went wrong", error: err });
+  }
+});
+
+app.post("/api/connection-request", authenticateToken, async (req, res) => {
+  const { receiverId } = req.body;
+  try {
+    const newRequest = await prisma.connectionRequest.create({
+      data: {
+        senderId: req.user.id,
+        receiverId: receiverId,
+      },
+    });
+    res.status(201).json({ message: "Connection request sent", newRequest });
+  } catch (err) {
+    res.status(500).json({ message: "Something went wrong", error: err });
+  }
+});
+
+app.get("/api/connection-requests", authenticateToken, async (req, res) => {
+  try {
+    const requests = await prisma.connectionRequest.findMany({
+      where: {
+        OR: [{ senderId: req.user.id }, { receiverId: req.user.id }],
+      },
+      include: {
+        sender: true,
+        receiver: true,
+      },
+    });
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ message: "Something went wrong", error: err });
+  }
+});
+
+app.get("/api/user", authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { profile: true },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Something went wrong", error: err });
+  }
+});
+
+app.put("/api/update-bio", authenticateToken, async (req, res) => {
+  const { bio } = req.body;
+  try {
+    const updatedProfile = await prisma.profile.update({
+      where: { userId: req.user.id },
+      data: { bio: bio },
+    });
     res
-      .status(201)
-      .json({ message: "Profile created successfully", newProfile });
+      .status(200)
+      .json({ message: "Bio updated successfully", updatedProfile });
   } catch (err) {
     res.status(500).json({ message: "Something went wrong", error: err });
   }
