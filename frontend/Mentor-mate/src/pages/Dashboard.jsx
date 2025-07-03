@@ -43,24 +43,28 @@ const Dashboard = () => {
   return (
     <>
       <Navbar handleLogOut={handleLogOut} />
-      <div className=" bg-gray-100 p-8 min-h-screen">
+      <div className="  min-h-screen p-8">
+        <div className = "max-w-7xl mx-auto">
+<h1 className="text-3xl font-bold text-gray-800 mb-6">Welcome to your Dashboard</h1>
         <div className="flex justify-center ">
           <SearchBox />
         </div>
-        <div className="flex justify-center items-center">
-          <div className="bg-white p-8 rounded shadow-md w-1/3 text-center m-4 h-80">
-            <h2 className="text-2xl font-bold mb-6">
-              {recommendations.length} Recommended Mentors/Mentees
-            </h2>
-            <ul className="text-blue-800 ">
-              {recommendations.map((profile) => (
-                <li key={profile.id}>
-                  <h3>{profile.full_name}</h3>
-                  <p>Role: {profile.role}</p>
-                  <p>Interests: {profile.interests.join(", ")}</p>
-                </li>
-              ))}
-            </ul>
+        <div className="flex flex-col md:flex-row gap-6 mb-6">
+          <div className="bflex-1 bg-white rounded-lg shadow-md p-6">
+           <h2 className="text-xl font-semibold text-purple-600 mb-4">Recommended Matches</h2>
+{recommendations.length > 0 ? (
+  <ul className="space-y-2 text-gray-700">
+    {recommendations.map((profile) => (
+      <li key={profile.id} className="border-b pb-2">
+        <p className="font-medium">{profile.full_name}</p>
+        <p className="text-sm text-gray-500">Role: {profile.role}</p>
+        <p className="text-sm text-gray-500">Skills: {profile.interests.join(", ")}</p>
+      </li>
+    ))}
+  </ul>
+) : (
+  <p className="text-gray-400">No recommendations yet.</p>
+)}
           </div>
           <div className="bg-white p-8 rounded shadow-md w-1/3 text-center m-4 h-80">
             <h2 className="text-2xl font-bold mb-6">Todos</h2>
@@ -113,6 +117,7 @@ const Dashboard = () => {
             <p>Community Engagments will be shown here</p>
           </div>
         </div>
+        </div>
       </div>
       {showLogoutModal && (
         <div className="fixed inset-0 bg-gray-200 bg-opacity-4 flex items-center justify-center z-50">
@@ -135,7 +140,8 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
-        </div>
+       </div>
+
       )}
     </>
   );

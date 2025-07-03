@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from "react";
 
 export default function Connections() {
@@ -6,7 +8,7 @@ export default function Connections() {
   const sendRequest = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/connection-request",
+        "http://localhost:5000/api/connection/connection-request",
         {
           method: "POST",
           headers: {
@@ -30,7 +32,7 @@ export default function Connections() {
     const fetchRequests = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5000/api/connection-requests",
+          "http://localhost:5000/api/connection/connection-requests",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,

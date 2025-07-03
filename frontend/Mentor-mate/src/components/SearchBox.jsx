@@ -19,7 +19,7 @@ function SearchBox() {
       const data = await response.json();
       navigate("/search-results", { state: { results: data } });
     } catch (err) {
-      console.error("Error fetching search results:", err);
+      alert(err);
     }
   };
 
@@ -38,7 +38,6 @@ function SearchBox() {
       >
         Search
       </button>
-      <div></div>
     </div>
   );
 }

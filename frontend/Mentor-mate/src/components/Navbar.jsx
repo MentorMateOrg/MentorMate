@@ -15,8 +15,8 @@ function Navbar({ handleLogOut }) {
 
   return (
     <>
-      <nav className="px-2 sm:px-4 py-2.5 text-white flex justify-between">
-        <h2 className="flex items-end text-2xl font-bold text-purple-500">
+      <nav className="px-2 sm:px-4 py-2.5 text-white bg-purple-500 flex justify-between">
+        <h2 className="flex items-end text-2xl font-bold">
           MentorMate
         </h2>
         <div className="flex items-center justify-end text-white">
