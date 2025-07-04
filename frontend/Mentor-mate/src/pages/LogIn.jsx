@@ -28,7 +28,7 @@ function LogIn() {
 
   return (
     <>
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 to-white">
         <div className="bg-white shadow-lg rounded-xl px-8 py-10 w-full max-w-md">
           <form onSubmit={handleLogIn}>
             <h1 className="mb-4 text-2xl font-bold text-center">Log In</h1>
