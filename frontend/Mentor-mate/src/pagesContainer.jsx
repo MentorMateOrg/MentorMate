@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import RoleSelect from "./pages/RoleSelect.";
 import Profile from "./pages/Profile";
 import SearchResults from "./pages/SearchResults";
+import UserProfile from "./pages/UserProfile";
 
 const steps = {
   SIGNUP: 1,
@@ -97,6 +98,7 @@ export default function PagesContainer() {
             path="/profile"
             element={<Profile user={user} setUser={setUser} />}
           />
+          <Route path="/profile/:userId" element={<UserProfile />} />
         </Routes>
       </Router>
     </>
