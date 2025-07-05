@@ -1,6 +1,6 @@
 // SearchResults.jsx
 import React from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
 function SearchResults() {
   const location = useLocation();
@@ -13,9 +13,12 @@ function SearchResults() {
         <ul className="space-y-4">
           {results.map((user) => (
             <li key={user.id} className="bg-white p-4 rounded shadow">
-              <h2 className="text-xl font-semibold">
+              <Link
+                to={`/profile/${user.id}`}
+                className="text-xl font-semibold text-purple-600 hover:text-purple-800 hover:underline"
+              >
                 {user.profile.full_name}
-              </h2>
+              </Link>
               <p>Skills: {user.profile.interests.join(", ")}</p>
             </li>
           ))}
