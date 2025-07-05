@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import SearchBox from "../components/SearchBox";
 
 const Dashboard = () => {
@@ -58,7 +58,9 @@ const Dashboard = () => {
                 <ul className="space-y-2 text-gray-700">
                   {recommendations.map((profile) => (
                     <li key={profile.id} className="border-b pb-2">
-                      <p className="font-medium">{profile.full_name}</p>
+                      <Link to={`/profile/${profile.userId}`}>
+                        {profile.full_name}
+                      </Link>
                       <p className="text-sm text-gray-500">
                         Role: {profile.role}
                       </p>
