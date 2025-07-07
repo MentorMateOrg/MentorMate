@@ -2,82 +2,220 @@
 
 import React, { useState, useEffect } from "react";
 
-export default function Connections() {
-  const [requests, setRequests] = useState([]);
+export default function Connections({ targetUser }) {
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [connections, setConnections] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const sendRequest = async () => {
+    if (!targetUser) {
+      alert("No user selected to connect with");
+      return;
+    }
+
     try {
       const response = await fetch(
-        "http://localhost:5000/api/connection/connection-request",
+        "http://localhost:5000/api/connection/request",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ receiverId: user.id }),
+          body: JSON.stringify({ receiverId: targetUser.id }),
         }
       );
       if (response.ok) {
         alert("Connection request sent!");
       } else {
-        alert("Failed to send request");
+        const errorData = await response.json();
+        alert(`Failed to send request: ${errorData.message}`);
       }
     } catch (err) {
       alert("Error sending request:", err);
     }
   };
 
-  useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/api/connection/connection-requests",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        const data = await response.json();
-        setRequests(data);
-      } catch (err) {
-        alert("Error fetching requests:", err);
+  const acceptRequest = async (requestId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/connection/requests/${requestId}/accept`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        alert("Connection request accepted!");
+        // Refresh the data
+        fetchPendingRequests();
+        fetchConnections();
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to accept request: ${errorData.message}`);
       }
+    } catch (err) {
+      alert("Error accepting request:", err);
+    }
+  };
+
+  const rejectRequest = async (requestId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/connection/requests/${requestId}/reject`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        alert("Connection request rejected!");
+        // Refresh the pending requests
+        fetchPendingRequests();
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to reject request: ${errorData.message}`);
+      }
+    } catch (err) {
+      alert("Error rejecting request:", err);
+    }
+  };
+
+  const fetchPendingRequests = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/connection/requests/pending",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      const data = await response.json();
+      setPendingRequests(data);
+    } catch (err) {
+      alert("Error fetching pending requests:", err);
+    }
+  };
+
+  const fetchConnections = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/connection/connections",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      const data = await response.json();
+      setConnections(data);
+    } catch (err) {
+      alert("Error fetching connections:", err);
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      await Promise.all([fetchPendingRequests(), fetchConnections()]);
+      setLoading(false);
     };
 
-    fetchRequests();
+    fetchData();
   }, []);
+
+  if (loading) {
+    return <div>Loading connections...</div>;
+  }
 
   return (
     <>
-      <div className="flex gap-4 mt-4 justify-center md:justify-start">
-        <button
-          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition"
-          onClick={sendRequest}
-        >
-          Connect
-        </button>
-      </div>
-      <h1>Connections</h1>
-      {/* Connection Requests */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-lg font-semibold mb-4">Connection Requests</h2>
-        <ul className="space-y-2 text-gray-700">
-          {requests.length === 0 ? (
-            <li>No connection requests yet.</li>
+      {/* Connect Button - only show when viewing someone else's profile */}
+      {targetUser && (
+        <div className="flex gap-4 mt-4 justify-center md:justify-start">
+          <button
+            className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition"
+            onClick={sendRequest}
+          >
+            Connect
+          </button>
+        </div>
+      )}
+
+      <div className="space-y-6">
+        {/* Pending Connection Requests */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-4">Pending Connection Requests</h2>
+          {pendingRequests.length === 0 ? (
+            <p className="text-gray-500">No pending connection requests.</p>
           ) : (
-            requests.map((request) => (
-              <li key={request.id} className="border-b pb-2">
-                <span className="font-medium">{request.sender.email}</span>{" "}
-                wants to connect with{" "}
-                <span className="font-medium">
-                  {request.receiver.full_name}
-                </span>
-              </li>
-            ))
+            <div className="space-y-4">
+              {pendingRequests.map((request) => (
+                <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={request.sender.profile?.profilePicUrl || "https://static.vecteezy.com/system/resources/previews/055/581/121/non_2x/default-profile-picture-icon-avatar-photo-placeholder-illustration-vector.jpg"}
+                      alt="Profile"
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div>
+                      <p className="font-medium">{request.sender.profile?.full_name || request.sender.email}</p>
+                      <p className="text-sm text-gray-500">{request.sender.profile?.role || "User"}</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => acceptRequest(request.id)}
+                      className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => rejectRequest(request.id)}
+                      className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-        </ul>
+        </div>
+
+        {/* My Connections */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-4">My Connections</h2>
+          {connections.length === 0 ? (
+            <p className="text-gray-500">No connections yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {connections.map((connection) => (
+                <div key={connection.id} className="flex items-center space-x-4 p-4 border rounded-lg">
+                  <img
+                    src={connection.connectedUser.profile?.profilePicUrl || "https://static.vecteezy.com/system/resources/previews/055/581/121/non_2x/default-profile-picture-icon-avatar-photo-placeholder-illustration-vector.jpg"}
+                    alt="Profile"
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-medium">{connection.connectedUser.profile?.full_name || connection.connectedUser.email}</p>
+                    <p className="text-sm text-gray-500">{connection.connectedUser.profile?.role || "User"}</p>
+                    <p className="text-xs text-gray-400">
+                      Connected {new Date(connection.connectedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
