@@ -6,8 +6,8 @@ import LogIn from "./pages/LogIn";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import RoleSelect from "./pages/RoleSelect.";
-import Profile from "./pages/Profile";
 import SearchResults from "./pages/SearchResults";
+import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
 
 const steps = {
@@ -41,26 +41,55 @@ export default function PagesContainer() {
   const [role, setRole] = useState("");
   const [user, setUser] = useState("");
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/api/users/me", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        const data = await response.json();
-        if (response.ok) {
-          setUser(data);
-        } else {
-          alert("Error fetching user data");
-        }
-      } catch (err) {
-        alert("Error fetching user data");
+  const fetchUser = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setUser("");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5000/api/users/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setUser(data);
+      } else {
+        // If token is invalid, clear it
+        localStorage.removeItem("token");
+        setUser("");
       }
+    } catch (err) {
+      alert("Error fetching user data", err)
+      localStorage.removeItem("token");
+      setUser("");
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  // Listen for storage changes and login events to refresh user data
+  useEffect(() => {
+    const handleStorageChange = () => {
+      fetchUser();
     };
 
-    fetchUser();
+    const handleUserLogin = () => {
+      fetchUser();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("userLogin", handleUserLogin);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("userLogin", handleUserLogin);
+    };
   }, []);
 
   return (
