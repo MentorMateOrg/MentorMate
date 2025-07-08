@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function MenteeOnbaording({role, setRole}) {
+function MenteeOnboarding({role, setRole}) {
     const [fullName, setFullName] = useState("");
       const [linkedInUrl, setLinkedInUrl] = useState("");
       const [githubUrl, setGithubUrl] = useState("");
@@ -146,4 +146,4 @@ function MenteeOnbaording({role, setRole}) {
     )
 }
 
-export default MenteeOnbaording
+export default MenteeOnboarding
