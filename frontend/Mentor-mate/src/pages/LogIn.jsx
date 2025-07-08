@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
 
 function LogIn() {
   const [email, setEmail] = useState("");
@@ -16,8 +15,12 @@ function LogIn() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email, plainPassword: password }),
     });
-    const user = await response.json();
+    const data = await response.json();
     if (response.ok) {
+      // Store the token in localStorage
+      localStorage.setItem("token", data.token);
+      // Trigger a custom event to refresh user data
+      window.dispatchEvent(new Event("userLogin"));
       navigate("/dashboard");
     } else {
       alert("You are not registered! Please sign up");
@@ -67,7 +70,7 @@ function LogIn() {
               }`}
               disabled={!(email && password)}
             >
-              Sign Up
+              Login
             </button>
             <p className="mb-4 text-center text-gray-500">
               Don't have an account?{" "}
