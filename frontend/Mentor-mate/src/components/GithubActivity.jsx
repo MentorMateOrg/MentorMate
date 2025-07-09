@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from "react";
 
+import GitHubCalendar from "react-github-calendar";
+
+
 export default function GithubActivity({ githubUrl }) {
   const [activity, setActivity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+
+  const username = githubUrl ? extractUsernameFromUrl(githubUrl) : null;
 
   useEffect(() => {
     if (!githubUrl) {
@@ -43,6 +49,22 @@ export default function GithubActivity({ githubUrl }) {
     fetchGithubActivity();
   }, [githubUrl]);
 
+
+  function extractUsernameFromUrl(url) {
+    try {
+      const parsed = new URL(url);
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      return parts[0];
+    } catch {
+      return null;
+    }
+  }
+
+  if (!githubUrl) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md mt-4">
+        <h3 className="text-lg font-semibold mb-3">Github Activity</h3>
+
   if (!githubUrl) {
     return (
       <div>
@@ -63,6 +85,10 @@ export default function GithubActivity({ githubUrl }) {
 
   if (error) {
     return (
+
+      <div className="bg-white p-6 rounded-lg shadow-md mt-4">
+        <h3 className="text-lg font-semibold mb-3">Github Activity</h3>
+
       <div>
         <h3>Github Activity</h3>
         <p>{error}</p>
@@ -72,6 +98,10 @@ export default function GithubActivity({ githubUrl }) {
 
   if (!activity) {
     return (
+
+      <div className="bg-white p-6 rounded-lg shadow-md mt-4">
+        <h3 className="text-lg font-semibold mb-3">Github Activity</h3>
+
       <div>
         <h3>Github Activity</h3>
         <p>No activity data available</p>
@@ -80,6 +110,14 @@ export default function GithubActivity({ githubUrl }) {
   }
 
   return (
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h3 className="text-lg font-semibold mb-3">Github Activity</h3>
+      <div className="space-y-2 text-gray-700">
+        <p>Contributions this month: {activity.contributionsThisMonth}</p>
+        <p>Top language: {activity.topLanguage}</p>
+        <p>Top project: {activity.topProject}</p>
+        <p>Commit streak: 🔥{activity.commitStreak} day(s)</p>
+
     <div>
       <h3>Github Activity</h3>
       <div>
@@ -97,6 +135,11 @@ export default function GithubActivity({ githubUrl }) {
             ))}
           </div>
         )}
+        <div>
+          <h4>Contributions Chart</h4>
+          <GitHubCalendar username={username} />
+        </div>
+
       </div>
     </div>
   );
