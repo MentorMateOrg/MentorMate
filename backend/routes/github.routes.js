@@ -11,15 +11,16 @@ router.post("/activity", authToken, async (req, res) => {
       return res.status(400).json({ message: "githubUrl is required" });
     }
 
-    //Extract the username from the githubUrl
-    const username = extractUsernameFromUrl(githubUrl);
-    if (!username) {
-      return res.status(400).json({ message: "Invalid githubUrl" });
+    let username;
+    try {
+      username = extractUsernameFromUrl(githubUrl);
+    } catch (err) {
+      return res.status(400).json({ message: err.message });
     }
 
     const githubData = await fetchGithubData(username);
 
-    // Check if there was an error in fetching GitHub data
+
     if (githubData.error) {
       return res.status(500).json({ message: githubData.error });
     }
@@ -33,13 +34,18 @@ router.post("/activity", authToken, async (req, res) => {
 function extractUsernameFromUrl(githubUrl) {
   try {
     const url = new URL(githubUrl);
-    if (url.hostname === "github.com") {
-      const pathParts = url.pathname.split("/").filter((part) => part);
-      return pathParts[0];
+    if (url.hostname !== "github.com") {
+      return { username: null, error: "Not a GitHub URL" };
     }
-    return null;
+
+    const pathParts = url.pathname.split("/").filter(Boolean);
+    if (pathParts.length === 0) {
+      return { username: null, error: "Username not found in URL" };
+    }
+
+    return { username: pathParts[0], error: null };
   } catch (err) {
-    return null;
+    return { username: null, error: "Invalid URL" };
   }
 }
 
@@ -171,6 +177,9 @@ function getTopProject(repos) {
     if (b.forks_count !== a.forks_count) {
       return b.forks_count - a.forks_count;
     }
+    if(sortedRepos.length === 0){
+        return null
+    }
     return a.name.localeCompare(b.name);
   });
   return sortedRepos[0].name;
@@ -194,7 +203,7 @@ async function fetchCommitData(username, repos, githubToken) {
       try {
         // Fetch commits from this month for each repo
         const commitsResponse = await fetch(
-          `https://api.github.com/repos/${username}/${repo.name}/commits?author=${username}&since=${startOfMonth}&per_page=100`,
+          `https://api.github.com/repos/${repo.owner.login}/${repo.name}/commits?author=${username}&since=${startOfMonth}&per_page=100`,
           {
             headers: {
               Authorization: `token ${githubToken}`,
@@ -261,7 +270,11 @@ function calculateCommitStreakFromDates(commitDates) {
   if (uniqueDates.length === 0) return 0;
 
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const normalizedToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
 
   let streak = 0;
   let currentDate = new Date(today);
@@ -269,9 +282,9 @@ function calculateCommitStreakFromDates(commitDates) {
   // Check if there's a commit today or yesterday to start the streak
   const mostRecentCommit = uniqueDates[0];
 
-  const daysDiff = Math.floor(
-    (today - mostRecentCommit) / (1000 * 60 * 60 * 24)
-  );
+  const msInDay = 1000 * 60 * 60 * 24;
+
+  const daysDiff = Math.floor((normalizedToday - mostRecentCommit) / msInDay);
 
   if (daysDiff > 1) {
     return 0; // Streak is broken if no commits in the last 2 days
@@ -297,30 +310,37 @@ function calculateCommitStreakFromDates(commitDates) {
 function generateRealBadges(userData, reposData) {
   const badges = [];
 
+  const repositoryMasterCount = 50;
+  const activeDeveloperCount = 20;
+  const gettingStartedCount = 5;
+
   // Repository count badges
   const repoCount = userData.public_repos || 0;
-  if (repoCount >= 50) {
+  if (repoCount >= repositoryMasterCount) {
     badges.push({
       name: "Repository Master",
       description: "50+ public repositories",
     });
-  } else if (repoCount >= 20) {
+  } else if (repoCount >= activeDeveloperCount) {
     badges.push({
       name: "Active Developer",
       description: "20+ public repositories",
     });
-  } else if (repoCount >= 5) {
+  } else if (repoCount >= gettingStartedCount) {
     badges.push({
       name: "Getting Started",
       description: "5+ public repositories",
     });
   }
 
+  const popularDeveloperFollowers = 100;
+  const communityMemberFollowers = 50;
+
   // Follower count badges
   const followers = userData.followers || 0;
-  if (followers >= 100) {
+  if (followers >= popularDeveloperFollowers) {
     badges.push({ name: "Popular Developer", description: "100+ followers" });
-  } else if (followers >= 50) {
+  } else if (followers >= communityMemberFollowers) {
     badges.push({ name: "Community Member", description: "50+ followers" });
   }
 
@@ -331,9 +351,12 @@ function generateRealBadges(userData, reposData) {
     0
   );
 
-  if (totalStars >= 100) {
+  const starCollectorCount = 100;
+  const risingStarCount = 50;
+
+  if (totalStars >= starCollectorCount) {
     badges.push({ name: "Star Collector", description: "100+ total stars" });
-  } else if (totalStars >= 50) {
+  } else if (totalStars >= risingStarCount) {
     badges.push({ name: "Rising Star", description: "50+ total stars" });
   }
 
@@ -342,7 +365,10 @@ function generateRealBadges(userData, reposData) {
   const languages = new Set(
     reposData.map((repo) => repo.language).filter(Boolean)
   );
-  if (languages.size >= 5) {
+
+  const polyglotCount = 5;
+
+  if (languages.size >= polyglotCount) {
     badges.push({
       name: "Polyglot",
       description: "Uses 5+ programming languages",
@@ -352,15 +378,21 @@ function generateRealBadges(userData, reposData) {
   // Account age badge
   const accountCreated = new Date(userData.created_at);
 
+  totalDaysInYear = 365;
+
   const yearsActive = Math.floor(
-    (new Date() - accountCreated) / (1000 * 60 * 60 * 24 * 365)
+    (new Date() - accountCreated) / (msInDay * totalDaysInYear)
   );
-  if (yearsActive >= 5) {
+
+  const veteranDeveloperCount = 5;
+  const experiencedDeveloperCount = 2;
+
+  if (yearsActive >= veteranDeveloperCount) {
     badges.push({
       name: "Veteran Developer",
       description: "5+ years on GitHub",
     });
-  } else if (yearsActive >= 2) {
+  } else if (yearsActive >= experiencedDeveloperCount) {
     badges.push({ name: "Experienced", description: "2+ years on GitHub" });
   }
 
