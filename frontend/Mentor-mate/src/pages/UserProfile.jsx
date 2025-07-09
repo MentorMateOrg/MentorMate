@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
-
-import Connections from "./Connections";
-
 import GithubActivity from "../components/GithubActivity";
 
 export default function UserProfile() {
   const { userId } = useParams();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
+  const [loading, setLoading] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bio, setBio] = useState("");
   const [full_name, setFullName] = useState("");
@@ -23,6 +19,7 @@ export default function UserProfile() {
 
   useEffect(() => {
     const fetchUser = async () => {
+      setLoading(true);
       try {
         let response;
         if (isOwnProfile) {
@@ -162,7 +159,6 @@ export default function UserProfile() {
 
         {/* Github Activity */}
         <GithubActivity githubUrl={user.profile.githubUrl} />
-
 
         {/* Modal to edit bio - only show for own profile */}
         {isEditingBio && isOwnProfile && (

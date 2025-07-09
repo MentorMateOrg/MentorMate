@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 export default function Connections({ targetUser }) {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [connections, setConnections] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const sendRequest = async () => {
     if (!targetUser) {

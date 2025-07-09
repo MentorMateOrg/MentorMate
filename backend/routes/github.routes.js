@@ -244,18 +244,19 @@ async function fetchCommitData(username, repos, githubToken) {
 function calculateCommitStreakFromDates(commitDates) {
   if (commitDates.length === 0) return 0;
 
+  // Normalize dates to remove time component (keep only year, month, day)
+  const normalizedDates = commitDates.map(
+    (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+
   // Sort dates in descending order (most recent first)
-  const sortedDates = commitDates
+  const sortedDates = normalizedDates.sort((a, b) => b - a);
 
-    .map(
-      (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
-    )
-    .sort((a, b) => b - a);
-
-  // Remove duplicates (same day commits)
-  const uniqueDates = [
-    ...new Set(sortedDates.map((date) => date.getTime())),
-  ].map((time) => new Date(time));
+  // Remove duplicates (same day commits) - now this actually works for same day
+  const uniqueDates = sortedDates.filter((date, index, array) => {
+    if (index === 0) return true;
+    return date.getTime() !== array[index - 1].getTime();
+  });
 
   if (uniqueDates.length === 0) return 0;
 

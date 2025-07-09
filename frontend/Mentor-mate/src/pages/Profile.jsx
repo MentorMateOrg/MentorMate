@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Connections from "./Connections";
 import Navbar from "../components/Navbar";
-
-
 import GithubActivity from "../components/GithubActivity";
 
 
