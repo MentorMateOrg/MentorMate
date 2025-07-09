@@ -17,12 +17,15 @@ import searchRoutes from "./routes/search.routes.js";
 
 const app = express();
 const httpServer = createServer(app); // Create HTTP server
-const io = new Server(httpServer, { // Initialize Socket.io
+const io = new Server(httpServer, {
+  // Initialize Socket.io
   cors: {
-    origin: "http://localhost:3000",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
-  }
+    credentials: true
+  },
 });
+
 const prisma = new PrismaClient();
 dotenv.config();
 
@@ -46,16 +49,19 @@ app.get("/", (req, res) => {
 // Socket.io connection handling
 io.on("connection", (socket) => {
   socket.on("message", (message) => {
-    io.emit('message', `${socket.id.substring(0, 2)} said ${message}`);
+    io.emit("message", `${socket.id.substring(0, 2)} said ${message}`);
   });
 
   socket.on("disconnect", () => {
-    io.emit('message', `${socket.id.substring(0, 2)} disconnected`);
+    io.emit("message", `${socket.id.substring(0, 2)} disconnected`);
+  });
+
+  socket.on("connect", () => {
+    io.emit("message", `${socket.id.substring(0, 2)} connected`);
   });
 });
 
-
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

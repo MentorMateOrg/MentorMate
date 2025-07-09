@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import { useNavigate, Link } from "react-router-dom";
 import SearchBox from "../components/SearchBox";
+import LiveCodingEditor from "./LiveCodingEditor";
 
 const Dashboard = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -109,6 +110,9 @@ const Dashboard = () => {
                 Track your mentorship journey and achievements here.
               </p>
             </div>
+
+            {/* Live Coding */}
+            <LiveCodingEditor />
           </div>
         </div>
       </div>
