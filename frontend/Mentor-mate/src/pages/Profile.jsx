@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import Connections from "./Connections";
 import Navbar from "../components/Navbar";
 
+
+import GithubActivity from "../components/GithubActivity";
+
+
 export default function Profile({ user, setUser }) {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bio, setBio] = useState(user?.profile?.bio || "");
@@ -61,6 +65,7 @@ export default function Profile({ user, setUser }) {
       <Navbar user={user} />
       <div className="bg-gray-100 min-h-screen p-8">
         <div className="max-w-7xl mx-auto">
+
         {/* Profile Header */}
         <div className="flex flex-col md:flex-row items-center bg-white rounded-lg shadow-md p-6 mb-8">
           <img
@@ -168,6 +173,47 @@ export default function Profile({ user, setUser }) {
                 className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 ml-4"
               >
                 Cancel
+
+          {/* Profile Header */}
+          <div className="flex flex-col md:flex-row items-center bg-white rounded-lg shadow-md p-6 mb-8">
+            <img
+              src={user.profile.profilePicUrl}
+              alt="Profile"
+              className="w-32 h-32 rounded-full object-cover border-2 border-purple-500"
+            />
+            <div className="ml-0 md:ml-6 text-center md:text-left mt-4 md:mt-0">
+              <h2 className="text-2xl font-semibold">
+                {user.profile.full_name}
+              </h2>
+              <p className="text-gray-500">
+                {user.profile.role || "Role not added"}
+              </p>
+            </div>
+          </div>
+
+          {/* Skills and About */}
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-3">Skills</h3>
+              <ul className="space-y-2 text-gray-600">
+                {user.profile.interests.map((skill) => (
+                  <li key={skill}>{skill}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="md:col-span-2 flex justify-between bg-white p-6 rounded-lg shadow-md">
+              <div>
+                <h3 className="text-lg font-semibold mb-3">About Me</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  {user.profile.bio || "No bio added"}
+                </p>
+              </div>
+              <button
+                className="bg-purple-500 text-white px-8 cursor-pointer h-10 rounded-md hover:bg-purple-600"
+                onClick={() => setIsEditingBio(true)}
+              >
+                Edit
+
               </button>
             </div>
           </div>
@@ -182,8 +228,10 @@ export default function Profile({ user, setUser }) {
             ))}
           </div>
 
+
           {/* Connections */}
           <Connections />
+
 
           <GithubActivity githubUrl={user.profile.githubUrl} />
 
@@ -247,7 +295,6 @@ export default function Profile({ user, setUser }) {
               </div>
             </div>
           )}
-
         </div>
       </div>
     </>
