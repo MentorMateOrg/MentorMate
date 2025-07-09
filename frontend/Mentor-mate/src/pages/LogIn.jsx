@@ -16,14 +16,12 @@ function LogIn() {
       body: JSON.stringify({ email: email, plainPassword: password }),
     });
     const data = await response.json();
-    if (response.ok) {
-      // Store the token in localStorage
+    if (response.ok && data?.token) {
       localStorage.setItem("token", data.token);
-      // Trigger a custom event to refresh user data
       window.dispatchEvent(new Event("userLogin"));
       navigate("/dashboard");
     } else {
-      alert("You are not registered! Please sign up");
+      alert("Login failed. Please check your credentials.");
     }
     setEmail("");
     setPassword("");
