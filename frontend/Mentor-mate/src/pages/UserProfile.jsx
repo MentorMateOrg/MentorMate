@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import GithubActivity from "../components/GithubActivity";
 
 export default function UserProfile() {
   const { userId } = useParams();
@@ -84,6 +85,9 @@ export default function UserProfile() {
             </div>
           ))}
         </div>
+
+        {/* Github Activity */}
+        <GithubActivity githubUrl={user.profile.githubUrl} />
       </div>
     </>
   );
