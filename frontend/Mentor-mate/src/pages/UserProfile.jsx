@@ -17,48 +17,48 @@ export default function UserProfile() {
   // Check if this is the user's own profile (no userId param means own profile)
   const isOwnProfile = !userId;
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      setLoading(true);
-      try {
-        let response;
-        if (isOwnProfile) {
-          // Fetch current user's profile
-          response = await fetch("http://localhost:5000/api/users/me", {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          });
-        } else {
-          // Fetch specific user's profile
-          response = await fetch(`http://localhost:5000/api/users/${userId}`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          });
-        }
-
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data);
-          // Set editing states for own profile
-          if (isOwnProfile && data.profile) {
-            setBio(data.profile.bio || "");
-            setFullName(data.profile.full_name || "");
-            setProfilePicUrl(data.profile.profilePicUrl || "");
-            setExperiences(data.profile.experiences || []);
-            setInterests(data.profile.interests || []);
-          }
-        } else {
-          alert("User not found");
-        }
-      } catch (error) {
-        alert("Error fetching user");
-      } finally {
-        setLoading(false);
+  const fetchUser = async () => {
+    setLoading(true);
+    try {
+      let response;
+      if (isOwnProfile) {
+        // Fetch current user's profile
+        response = await fetch("http://localhost:5000/api/users/me", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+      } else {
+        // Fetch specific user's profile
+        response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
       }
-    };
 
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data);
+        // Set editing states for own profile
+        if (isOwnProfile && data.profile) {
+          setBio(data.profile.bio || "");
+          setFullName(data.profile.full_name || "");
+          setProfilePicUrl(data.profile.profilePicUrl || "");
+          setExperiences(data.profile.experiences || []);
+          setInterests(data.profile.interests || []);
+        }
+      } else {
+        alert("User not found");
+      }
+    } catch (error) {
+      alert("Error fetching user");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUser();
   }, [userId, isOwnProfile]);
 
