@@ -1,18 +1,17 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
-import { authenticateToken } from "../middleware/authenticateToken.js";
+import { authToken } from "../middleware/authToken.js";
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-router.get("/", authenticateToken, async (req, res) => {
+router.get("/", authToken, async (req, res) => {
   try {
     const profile = await prisma.profile.findUnique({
       where: { userId: req.user.id },
     });
 
-    if (!profile)
-      return res.status(404).json({ message: "Profile not found" });
+    if (!profile) return res.status(404).json({ message: "Profile not found" });
 
     const others = await prisma.profile.findMany({
       where: {
@@ -25,7 +24,9 @@ router.get("/", authenticateToken, async (req, res) => {
 
     res.json(others);
   } catch (err) {
-    res.status(500).json({ message: "Failed to get recommendations", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Failed to get recommendations", error: err.message });
   }
 });
 

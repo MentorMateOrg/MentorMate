@@ -1,9 +1,9 @@
 import express from "express";
-import { authenticateToken } from "../middleware/authenticateToken.js";
+import { authToken } from "../middleware/authToken.js";
 
 const router = express.Router();
 
-router.post("/activity", authenticateToken, async (req, res) => {
+router.post("/activity", authToken, async (req, res) => {
   try {
     const { githubUrl } = req.body;
 

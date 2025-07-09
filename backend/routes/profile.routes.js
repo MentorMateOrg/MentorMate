@@ -1,11 +1,11 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
-import { authenticateToken } from "../middleware/authenticateToken.js";
+import { authToken } from "../middleware/authToken.js";
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-router.post("/onboarding", authenticateToken, async (req, res) => {
+router.post("/onboarding", authToken, async (req, res) => {
   try {
     const profile = await prisma.profile.findUnique({
       where: { userId: req.user.id },
@@ -48,8 +48,8 @@ router.post("/onboarding", authenticateToken, async (req, res) => {
   }
 });
 
-router.put("/", authenticateToken, async (req, res) => {
-  const {full_name, bio, profilePicUrl, interests, experiences} = req.body;
+router.put("/", authToken, async (req, res) => {
+  const { full_name, bio, profilePicUrl, interests, experiences } = req.body;
   try {
     const updated = await prisma.profile.update({
       where: { userId: req.user.id },
