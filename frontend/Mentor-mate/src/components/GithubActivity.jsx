@@ -53,7 +53,7 @@ export default function GithubActivity({ githubUrl }) {
     fetchGithubActivity();
   }, [githubUrl]);
 
-  const GITHUB_ACTIVITY = (
+  const GithubActivityHeader = (
     <h3 className="text-lg font-semibold mb-3">Github Activity</h3>
   );
 
@@ -69,7 +69,7 @@ export default function GithubActivity({ githubUrl }) {
   if (!githubUrl) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md mt-4">
-        {GITHUB_ACTIVITY}
+        {GithubActivityHeader}
         <p>No Github URL provided</p>
       </div>
     );
@@ -78,7 +78,7 @@ export default function GithubActivity({ githubUrl }) {
   if (loading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md mt-4">
-        {GITHUB_ACTIVITY}
+        {GithubActivityHeader}
         <p>Loading Github data...</p>
       </div>
     );
@@ -87,7 +87,7 @@ export default function GithubActivity({ githubUrl }) {
   if (error) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md mt-4">
-        {GITHUB_ACTIVITY}
+        {GithubActivityHeader}
         <p className="text-red-500">{error}</p>
       </div>
     );
@@ -96,7 +96,7 @@ export default function GithubActivity({ githubUrl }) {
   if (!activity) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md mt-4">
-        {GITHUB_ACTIVITY}
+        {GithubActivityHeader}
         <p>No activity data available</p>
       </div>
     );
