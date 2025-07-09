@@ -2,12 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
-
-import GithubActivity from "../components/GithubActivity";
 import Connections from "./Connections";
 
 import GithubActivity from "../components/GithubActivity";
-
 
 export default function UserProfile() {
   const { userId } = useParams();
@@ -24,11 +21,9 @@ export default function UserProfile() {
   // Check if this is the user's own profile (no userId param means own profile)
   const isOwnProfile = !userId;
 
-
   useEffect(() => {
     const fetchUser = async () => {
       try {
-
         let response;
         if (isOwnProfile) {
           // Fetch current user's profile
@@ -57,19 +52,6 @@ export default function UserProfile() {
             setExperiences(data.profile.experiences || []);
             setInterests(data.profile.interests || []);
           }
-
-        const response = await fetch(
-          `http://localhost:5000/api/users/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data);
-
         } else {
           alert("User not found");
         }
@@ -79,8 +61,8 @@ export default function UserProfile() {
         setLoading(false);
       }
     };
-    fetchUser();
 
+    fetchUser();
   }, [userId, isOwnProfile]);
 
   const handleSaveBio = async () => {
@@ -110,9 +92,6 @@ export default function UserProfile() {
       alert("Error updating profile");
     }
   };
-
-  }, [userId]);
-
 
   if (loading) {
     return <div>Loading...</div>;
@@ -151,7 +130,6 @@ export default function UserProfile() {
             </ul>
           </div>
           <div className="bg-white p-6 rounded-lg shadow-md md:w-2/3">
-
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <h3 className="text-lg font-semibold mb-3">About Me</h3>
@@ -167,9 +145,8 @@ export default function UserProfile() {
               )}
             </div>
 
-            <h3 className="text-lg font-semibold mb-3">About Me</h3>
-            <p>{user.profile.bio || "No bio added"}</p>
-
+            {/* <h3 className="text-lg font-semibold mb-3">About Me</h3>
+            <p>{user.profile.bio || "No bio added"}</p> */}
           </div>
         </div>
 
@@ -186,9 +163,6 @@ export default function UserProfile() {
         {/* Github Activity */}
         <GithubActivity githubUrl={user.profile.githubUrl} />
 
-
-        {/* Connections */}
-        <Connections targetUser={user} />
 
         {/* Modal to edit bio - only show for own profile */}
         {isEditingBio && isOwnProfile && (
@@ -264,7 +238,6 @@ export default function UserProfile() {
             </div>
           </div>
         )}
-
       </div>
     </>
   );

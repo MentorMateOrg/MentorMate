@@ -1,6 +1,7 @@
 
 
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 export default function Connections({ targetUser }) {
   const [pendingRequests, setPendingRequests] = useState([]);
@@ -160,6 +161,7 @@ export default function Connections({ targetUser }) {
               {pendingRequests.map((request) => (
                 <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center space-x-4">
+                  <Link to={`/profile/${request.sender.id}`}>
                     <img
                       src={request.sender.profile?.profilePicUrl || "https://static.vecteezy.com/system/resources/previews/055/581/121/non_2x/default-profile-picture-icon-avatar-photo-placeholder-illustration-vector.jpg"}
                       alt="Profile"
@@ -169,7 +171,9 @@ export default function Connections({ targetUser }) {
                       <p className="font-medium">{request.sender.profile?.full_name || request.sender.email}</p>
                       <p className="text-sm text-gray-500">{request.sender.profile?.role || "User"}</p>
                     </div>
+                    </Link>
                   </div>
+
                   <div className="flex space-x-2">
                     <button
                       onClick={() => acceptRequest(request.id)}
@@ -199,6 +203,7 @@ export default function Connections({ targetUser }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {connections.map((connection) => (
                 <div key={connection.id} className="flex items-center space-x-4 p-4 border rounded-lg">
+                  <Link to={`/profile/${connection.connectedUser.id}`}>
                   <img
                     src={connection.connectedUser.profile?.profilePicUrl || "https://static.vecteezy.com/system/resources/previews/055/581/121/non_2x/default-profile-picture-icon-avatar-photo-placeholder-illustration-vector.jpg"}
                     alt="Profile"
@@ -211,6 +216,7 @@ export default function Connections({ targetUser }) {
                       Connected {new Date(connection.connectedAt).toLocaleDateString()}
                     </p>
                   </div>
+                  </Link>
                 </div>
               ))}
             </div>
