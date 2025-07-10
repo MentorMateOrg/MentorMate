@@ -11,7 +11,13 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const handleLogOut = () => setShowLogoutModal(true);
-  const onConfirm = () => navigate("/login");
+  const onConfirm = () => {
+    // Clear the token and navigate to login
+    localStorage.removeItem("token");
+    // Trigger a custom event to clear user data
+    window.dispatchEvent(new Event("userLogout"));
+    navigate("/login");
+  };
   const onClose = () => setShowLogoutModal(false);
 
   const fetchRecommendations = async () => {
@@ -37,7 +43,7 @@ const Dashboard = () => {
 
   return (
     <>
-      <Navbar handleLogOut={handleLogOut} />
+      <Navbar />
 
       <div className="bg-gray-100 min-h-screen p-8">
         <div className="max-w-7xl mx-auto">
