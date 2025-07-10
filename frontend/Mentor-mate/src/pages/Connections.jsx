@@ -217,7 +217,7 @@ export default function Connections({ targetUser }) {
                         Reject
                       </button>
                     </div>
-                    
+
                   </div>
 
                 ))}
