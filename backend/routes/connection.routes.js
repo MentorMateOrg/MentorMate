@@ -78,7 +78,9 @@ router.put("/requests/:id/accept", authenticateToken, async (req, res) => {
     });
 
     if (!request) {
-      return res.status(404).json({ message: "Connection request not found or already processed" });
+      return res
+        .status(404)
+        .json({ message: "Connection request not found or already processed" });
     }
 
     // Update the request status to ACCEPTED
@@ -99,7 +101,10 @@ router.put("/requests/:id/accept", authenticateToken, async (req, res) => {
       },
     });
 
-    res.json({ message: "Connection request accepted", request: updatedRequest });
+    res.json({
+      message: "Connection request accepted",
+      request: updatedRequest,
+    });
   } catch (err) {
     res.status(500).json({ message: "Accept failed", error: err.message });
   }
@@ -119,7 +124,9 @@ router.put("/requests/:id/reject", authenticateToken, async (req, res) => {
     });
 
     if (!request) {
-      return res.status(404).json({ message: "Connection request not found or already processed" });
+      return res
+        .status(404)
+        .json({ message: "Connection request not found or already processed" });
     }
 
     // Update the request status to REJECTED
@@ -140,7 +147,10 @@ router.put("/requests/:id/reject", authenticateToken, async (req, res) => {
       },
     });
 
-    res.json({ message: "Connection request rejected", request: updatedRequest });
+    res.json({
+      message: "Connection request rejected",
+      request: updatedRequest,
+    });
   } catch (err) {
     res.status(500).json({ message: "Reject failed", error: err.message });
   }
@@ -171,9 +181,11 @@ router.get("/connections", authenticateToken, async (req, res) => {
     });
 
     // Transform the data to show the "other" person in each connection
-    const transformedConnections = connections.map(connection => {
+    const transformedConnections = connections.map((connection) => {
       const isCurrentUserSender = connection.senderId === req.user.id;
-      const connectedUser = isCurrentUserSender ? connection.receiver : connection.sender;
+      const connectedUser = isCurrentUserSender
+        ? connection.receiver
+        : connection.sender;
 
       return {
         id: connection.id,
@@ -184,7 +196,9 @@ router.get("/connections", authenticateToken, async (req, res) => {
 
     res.json(transformedConnections);
   } catch (err) {
-    res.status(500).json({ message: "Fetch connections failed", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Fetch connections failed", error: err.message });
   }
 });
 
