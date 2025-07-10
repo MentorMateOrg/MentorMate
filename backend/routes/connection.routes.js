@@ -1,11 +1,11 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
-import { authenticateToken } from "../middleware/authenticateToken.js";
+import { authToken } from "../middleware/authToken.js";
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-router.post("/request", authenticateToken, async (req, res) => {
+router.post("/request", authToken, async (req, res) => {
   const { receiverId } = req.body;
   try {
     const request = await prisma.connectionRequest.create({
@@ -17,7 +17,7 @@ router.post("/request", authenticateToken, async (req, res) => {
   }
 });
 
-router.get("/requests", authenticateToken, async (req, res) => {
+router.get("/requests", authToken, async (req, res) => {
   try {
     const requests = await prisma.connectionRequest.findMany({
       where: {
@@ -43,7 +43,7 @@ router.get("/requests", authenticateToken, async (req, res) => {
 });
 
 // Get pending connection requests received by the current user
-router.get("/requests/pending", authenticateToken, async (req, res) => {
+router.get("/requests/pending", authToken, async (req, res) => {
   try {
     const pendingRequests = await prisma.connectionRequest.findMany({
       where: {
@@ -65,7 +65,7 @@ router.get("/requests/pending", authenticateToken, async (req, res) => {
 });
 
 // Accept a connection request
-router.put("/requests/:id/accept", authenticateToken, async (req, res) => {
+router.put("/requests/:id/accept", authToken, async (req, res) => {
   const { id } = req.params;
   try {
     // First, verify the request exists and belongs to the current user
@@ -111,7 +111,7 @@ router.put("/requests/:id/accept", authenticateToken, async (req, res) => {
 });
 
 // Reject a connection request
-router.put("/requests/:id/reject", authenticateToken, async (req, res) => {
+router.put("/requests/:id/reject", authToken, async (req, res) => {
   const { id } = req.params;
   try {
     // First, verify the request exists and belongs to the current user
@@ -157,7 +157,7 @@ router.put("/requests/:id/reject", authenticateToken, async (req, res) => {
 });
 
 // Get accepted connections (friends/connections)
-router.get("/connections", authenticateToken, async (req, res) => {
+router.get("/connections", authToken, async (req, res) => {
   try {
     const connections = await prisma.connectionRequest.findMany({
       where: {

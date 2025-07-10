@@ -1,11 +1,11 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
-import { authenticateToken } from "../middleware/authenticateToken.js";
+import { authToken } from "../middleware/authToken.js";
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-router.get("/me", authenticateToken, async (req, res) => {
+router.get("/me", authToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
@@ -18,7 +18,7 @@ router.get("/me", authenticateToken, async (req, res) => {
   }
 });
 
-router.get("/:userId", authenticateToken, async (req, res) => {
+router.get("/:userId", authToken, async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
 

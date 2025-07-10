@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
-
-import Connections from "./Connections";
-
 import GithubActivity from "../components/GithubActivity";
 
 export default function UserProfile() {
   const { userId } = useParams();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
+  const [loading, setLoading] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bio, setBio] = useState("");
   const [full_name, setFullName] = useState("");
@@ -21,47 +17,48 @@ export default function UserProfile() {
   // Check if this is the user's own profile (no userId param means own profile)
   const isOwnProfile = !userId;
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        let response;
-        if (isOwnProfile) {
-          // Fetch current user's profile
-          response = await fetch("http://localhost:5000/api/users/me", {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          });
-        } else {
-          // Fetch specific user's profile
-          response = await fetch(`http://localhost:5000/api/users/${userId}`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          });
-        }
-
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data);
-          // Set editing states for own profile
-          if (isOwnProfile && data.profile) {
-            setBio(data.profile.bio || "");
-            setFullName(data.profile.full_name || "");
-            setProfilePicUrl(data.profile.profilePicUrl || "");
-            setExperiences(data.profile.experiences || []);
-            setInterests(data.profile.interests || []);
-          }
-        } else {
-          alert("User not found");
-        }
-      } catch (error) {
-        alert("Error fetching user");
-      } finally {
-        setLoading(false);
+  const fetchUser = async () => {
+    setLoading(true);
+    try {
+      let response;
+      if (isOwnProfile) {
+        // Fetch current user's profile
+        response = await fetch("http://localhost:5000/api/users/me", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+      } else {
+        // Fetch specific user's profile
+        response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
       }
-    };
 
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data);
+        // Set editing states for own profile
+        if (isOwnProfile && data.profile) {
+          setBio(data.profile.bio || "");
+          setFullName(data.profile.full_name || "");
+          setProfilePicUrl(data.profile.profilePicUrl || "");
+          setExperiences(data.profile.experiences || []);
+          setInterests(data.profile.interests || []);
+        }
+      } else {
+        alert("User not found");
+      }
+    } catch (error) {
+      alert("Error fetching user");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUser();
   }, [userId, isOwnProfile]);
 
@@ -162,7 +159,6 @@ export default function UserProfile() {
 
         {/* Github Activity */}
         <GithubActivity githubUrl={user.profile.githubUrl} />
-
 
         {/* Modal to edit bio - only show for own profile */}
         {isEditingBio && isOwnProfile && (
