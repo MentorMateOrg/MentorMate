@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 
@@ -8,17 +7,20 @@ const navigation = {
   CONNECTION_REQUESTS: "Connection Requests",
 };
 
-function Navbar({ handleLogOut }) {
-  const [isOpen, setIsOpen] = useState(false);
-
+function Navbar() {
   const navigate = useNavigate();
+
+  const handleLogOut = () => {
+    localStorage.removeItem("token");
+    // Trigger a custom event to clear user data
+    window.dispatchEvent(new Event("userLogout"));
+    navigate("/login");
+  };
 
   return (
     <>
       <nav className="px-2 sm:px-4 py-2.5 text-white bg-purple-500 flex justify-between">
-        <h2 className="flex items-end text-2xl font-bold">
-          MentorMate
-        </h2>
+        <h2 className="flex items-end text-2xl font-bold">MentorMate</h2>
         <div className="flex items-center justify-end text-white">
           <Link
             to={"/profile"}
