@@ -16,6 +16,7 @@ import userRoutes from "./routes/user.routes.js";
 import connectionRoutes from "./routes/connection.routes.js";
 import recommendationRoutes from "./routes/recommendation.routes.js";
 import searchRoutes from "./routes/search.routes.js";
+import { parse } from "path";
 
 const app = express();
 const httpServer = createServer(app); // Create HTTP server
@@ -170,11 +171,11 @@ await prisma.room.create({
   });
 
   // Handle code changes
-  socket.on("code-change", (data) => {
+  socket.on("code-change", async (data) => {
     const userRoom = userRooms.get(socket.id);
     if (!userRoom) return;
 
-    const { roomId } = userRoom;
+    const { roomId, userId } = userRoom;
     const room = activeRooms.get(roomId);
     if (!room) return;
 
@@ -182,10 +183,24 @@ await prisma.room.create({
     room.code = data.code;
     updateRoomActivity(roomId);
 
+await prisma.roomSession.create({
+  data: {
+    room: {
+      connect: {roomId},
+
+    },
+    user: {
+      connect: {id: parseInt(userId)},
+    },
+    code: data.code,
+    language: room.language,
+  },
+})
+
     // Broadcast to all other users in the room
     socket.to(roomId).emit("code-update", {
       code: data.code,
-      userId: data.userId,
+      userId,
     });
   });
 
