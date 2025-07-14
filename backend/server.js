@@ -6,6 +6,8 @@ import { PrismaClient } from "@prisma/client";
 import githubRoutes from "./routes/github.routes.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
+
 
 // Route files
 import authRoutes from "./routes/auth.routes.js";
@@ -113,23 +115,35 @@ setInterval(cleanupInactiveRooms, CLEANUP_INTERVAL);
 // Socket.io connection handling
 io.on("connection", (socket) => {
   // Join a coding room
-  socket.on("join-room", (roomId, userId) => {
-    const validation = validateRoomAccess(roomId, userId);
+  socket.on("join-room", async (roomId, token) => {
+    try{
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      const userId = decoded.userId;
+
+    const validation = validateRoomAccess(roomId, userId.toString());
     if (!validation.valid) {
       socket.emit("room-error", { error: validation.error });
       return;
     }
 
+
     socket.join(roomId);
-    userRooms.set(socket.id, { roomId, userId });
+    userRooms.set(socket.id, { roomId, userId: userId.toString() });
 
     // Initialize room if it doesn't exist
     if (!activeRooms.has(roomId)) {
       activeRooms.set(roomId, createRoom(roomId));
     }
+await prisma.room.create({
+  data: {
+    roomId,
+    title: `Room ${roomId}`,
+    createdById: userId
+  }
+})
 
     const room = activeRooms.get(roomId);
-    room.users.add(userId);
+    room.users.add(userId.toString());
     updateRoomActivity(roomId);
 
     // Send current room state to the joining user
@@ -150,6 +164,9 @@ io.on("connection", (socket) => {
       users: Array.from(room.users),
       userCount: room.users.size,
     });
+  } catch (error) {
+    socket.emit("room-error", { error: "Invalid token" });
+  }
   });
 
   // Handle code changes
