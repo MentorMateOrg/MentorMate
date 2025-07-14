@@ -26,6 +26,8 @@ model User {
   profile Profile?
   sentRequests ConnectionRequest[] @relation("sentRequests")
   receivedRequests ConnectionRequest[] @relation("receivedRequests")
+  createdRooms Room[] @relation("UserCreatedRooms")
+  roomSessions RoomSession[] @relation("UserRoomSessions")
 }
 
 
@@ -54,4 +56,27 @@ model ConnectionRequest {
   createdAt DateTime @default(now())
   sender User @relation("sentRequests", fields: [senderId], references: [id])
   receiver User @relation("receivedRequests", fields: [receiverId], references: [id])
+}
+
+model Room {
+  id Int @id @default(autoincrement())
+  roomId String @unique
+  title String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  language String @default("javascript")
+  createdById Int
+  createdBy User @relation("UserCreatedRooms", fields: [createdById], references: [id])
+  sessions RoomSession[]
+}
+
+model RoomSession {
+  id Int @id @default(autoincrement())
+  room Room @relation(fields: [roomId], references: [id])
+  roomId Int
+  userId Int
+  user User @relation("UserRoomSessions", fields: [userId], references: [id])
+  code String
+  createdAt DateTime @default(now())
+  language String
 }
