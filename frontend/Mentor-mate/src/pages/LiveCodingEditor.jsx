@@ -7,6 +7,7 @@ const SOCKET_URL = "http://localhost:5000";
 const DEFAULT_LANGUAGE = "javascript";
 const EDITOR_THEME = "vs-dark";
 const DEBOUNCE_DELAY = 300;
+const ANONYMOUS = "Anonymous"
 
 const SUPPORTED_LANGUAGES = [
   { value: "javascript", label: "JavaScript" },
@@ -81,7 +82,7 @@ export default function LiveCodingEditor() {
 
   const joinRoom = () => {
     const token = localStorage.getItem("token");
-    let fullName = "Anonymous";
+    let fullName = ANONYMOUS;
     if (token) {
       const decoded = jwtDecode(token);
       fullName = decoded.fullName;
