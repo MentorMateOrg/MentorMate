@@ -2,10 +2,17 @@ import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import Editor from "@monaco-editor/react";
 
+import { jwtDecode } from "jwt-decode";
+
+
 const SOCKET_URL = "http://localhost:5000";
 const DEFAULT_LANGUAGE = "javascript";
 const EDITOR_THEME = "vs-dark";
 const DEBOUNCE_DELAY = 300;
+
+const ANONYMOUS = "Anonymous"
+
+
 
 const SUPPORTED_LANGUAGES = [
   { value: "javascript", label: "JavaScript" },
@@ -79,8 +86,16 @@ export default function LiveCodingEditor() {
   }, [codingEditor]);
 
   const joinRoom = () => {
-    if (socket && roomId.trim() && userId.trim()) {
-      socket.emit("join-room", roomId.trim(), userId.trim());
+    const token = localStorage.getItem("token");
+    let fullName = ANONYMOUS;
+    if (token) {
+      const decoded = jwtDecode(token);
+      fullName = decoded.fullName;
+    }
+    if (socket && roomId.trim() && token) {
+      socket.emit("join-room", roomId.trim(), token, fullName);
+    } else {
+      alert("You must logged in to join a room");
     }
   };
 
@@ -156,13 +171,7 @@ export default function LiveCodingEditor() {
                   onChange={(e) => setRoomId(e.target.value)}
                   className="border px-3 py-2 rounded"
                 />
-                <input
-                  type="text"
-                  placeholder="Enter Your Name"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  className="border px-3 py-2 rounded"
-                />
+
                 <button
                   onClick={joinRoom}
                   className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
@@ -192,12 +201,13 @@ export default function LiveCodingEditor() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm">Active Users:</span>
                   <div className="flex gap-1">
-                    {connectedUsers.map((user, index) => (
+                    {connectedUsers.map((fullName, index) => (
+
                       <span
                         key={index}
                         className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
                       >
-                        {user}
+                        {fullName}
                       </span>
                     ))}
                   </div>
