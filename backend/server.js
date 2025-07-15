@@ -54,6 +54,8 @@ const EMPTY_ROOM_SIZE = 0;
 const MAX_ROOM_CAPACITY = 10;
 const ROOM_INACTIVITY_TIMEOUT = 3600000; // 1 hour in milliseconds
 const DEFAULT_LANGUAGE = "javascript";
+const DEFAULT_CODE_TEMPLATE = `// Welcome to collaborative coding!
+// Start typing to see real-time updates`;
 
 // Store active rooms and users
 const activeRooms = new Map();
@@ -62,7 +64,7 @@ const userRooms = new Map();
 // Room management utilities
 const createRoom = (roomId) => {
   return {
-    code: "// Welcome to collaborative coding!\n// Start typing to see real-time updates",
+    code: DEFAULT_CODE_TEMPLATE,
     language: DEFAULT_LANGUAGE,
     users: new Set(),
     createdAt: new Date(),

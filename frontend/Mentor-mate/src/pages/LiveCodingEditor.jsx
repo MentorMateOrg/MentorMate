@@ -1,13 +1,18 @@
 import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import Editor from "@monaco-editor/react";
+
 import { jwtDecode } from "jwt-decode";
+
 
 const SOCKET_URL = "http://localhost:5000";
 const DEFAULT_LANGUAGE = "javascript";
 const EDITOR_THEME = "vs-dark";
 const DEBOUNCE_DELAY = 300;
+
 const ANONYMOUS = "Anonymous"
+
+
 
 const SUPPORTED_LANGUAGES = [
   { value: "javascript", label: "JavaScript" },
@@ -166,6 +171,7 @@ export default function LiveCodingEditor() {
                   onChange={(e) => setRoomId(e.target.value)}
                   className="border px-3 py-2 rounded"
                 />
+
                 <button
                   onClick={joinRoom}
                   className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
@@ -196,6 +202,7 @@ export default function LiveCodingEditor() {
                   <span className="text-sm">Active Users:</span>
                   <div className="flex gap-1">
                     {connectedUsers.map((fullName, index) => (
+
                       <span
                         key={index}
                         className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
