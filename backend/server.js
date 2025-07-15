@@ -8,7 +8,6 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 
-
 // Route files
 import authRoutes from "./routes/auth.routes.js";
 import profileRoutes from "./routes/profile.routes.js";
@@ -116,58 +115,71 @@ setInterval(cleanupInactiveRooms, CLEANUP_INTERVAL);
 // Socket.io connection handling
 io.on("connection", (socket) => {
   // Join a coding room
-  socket.on("join-room", async (roomId, token) => {
-    try{
-      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-      const userId = decoded.userId;
+  socket.on("join-room", async (roomId, token, fullName) => {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const userId = decoded.id.toString();
 
-    const validation = validateRoomAccess(roomId, userId.toString());
-    if (!validation.valid) {
-      socket.emit("room-error", { error: validation.error });
-      return;
-    }
+      const validation = validateRoomAccess(roomId, userId);
+      if (!validation.valid) {
+        socket.emit("room-error", { error: validation.error });
+        return;
+      }
 
+      // Ensure the room exists in memory
+      if (!activeRooms.has(roomId)) {
+        activeRooms.set(roomId, createRoom(roomId));
+      }
 
-    socket.join(roomId);
-    userRooms.set(socket.id, { roomId, userId: userId.toString() });
+      // Make sure the room exists in DB (handle race condition)
+      await prisma.room.upsert({
+        where: { roomId },
+        update: {},
+        create: {
+          roomId,
+          title: `Room ${roomId}`,
+          createdById: parseInt(userId),
+        },
+      });
 
-    // Initialize room if it doesn't exist
-    if (!activeRooms.has(roomId)) {
-      activeRooms.set(roomId, createRoom(roomId));
-    }
-await prisma.room.create({
-  data: {
-    roomId,
-    title: `Room ${roomId}`,
-    createdById: userId
-  }
-})
+      const room = activeRooms.get(roomId);
+      socket.join(roomId);
 
-    const room = activeRooms.get(roomId);
-    room.users.add(userId.toString());
-    updateRoomActivity(roomId);
+      // Store user info object instead of just userId
+      const userInfo = { userId, fullName };
+      room.users.add(userInfo);
+      userRooms.set(socket.id, { roomId, userId, fullName });
 
-    // Send current room state to the joining user
-    socket.emit("room-state", {
-      code: room.code,
-      language: room.language,
-      users: Array.from(room.users),
-      roomInfo: {
-        createdAt: room.createdAt,
+      updateRoomActivity(roomId);
+
+      // Get array of fullNames for display
+      const userNames = Array.from(room.users).map((user) => user.fullName);
+
+      // Emit current state to this user
+      socket.emit("room-state", {
+        code: room.code,
+        language: room.language,
+        users: userNames,
+        roomInfo: {
+          createdAt: room.createdAt,
+          userCount: room.users.size,
+          maxCapacity: MAX_ROOM_CAPACITY,
+        },
+      });
+
+      // Notify others
+      socket.to(roomId).emit("user-joined", {
+        fullName,
+        users: userNames,
         userCount: room.users.size,
-        maxCapacity: MAX_ROOM_CAPACITY,
-      },
-    });
-
-    // Notify others in the room
-    socket.to(roomId).emit("user-joined", {
-      userId,
-      users: Array.from(room.users),
-      userCount: room.users.size,
-    });
-  } catch (error) {
-    socket.emit("room-error", { error: "Invalid token" });
-  }
+      });
+    } catch (error) {
+      if (error.name === "JsonWebTokenError") {
+        socket.emit("room-error", { error: "Invalid token" });
+      } else {
+        socket.emit("room-error", { error: "Internal server error" });
+      }
+    }
   });
 
   // Handle code changes
@@ -183,19 +195,18 @@ await prisma.room.create({
     room.code = data.code;
     updateRoomActivity(roomId);
 
-await prisma.roomSession.create({
-  data: {
-    room: {
-      connect: {roomId},
-
-    },
-    user: {
-      connect: {id: parseInt(userId)},
-    },
-    code: data.code,
-    language: room.language,
-  },
-})
+    await prisma.roomSession.create({
+      data: {
+        room: {
+          connect: { roomId },
+        },
+        user: {
+          connect: { id: parseInt(userId) },
+        },
+        code: data.code,
+        language: room.language,
+      },
+    });
 
     // Broadcast to all other users in the room
     socket.to(roomId).emit("code-update", {
@@ -227,29 +238,35 @@ await prisma.roomSession.create({
   // Handle disconnect
   socket.on("disconnect", () => {
     const userRoom = userRooms.get(socket.id);
-    if (userRoom) {
-      const { roomId, userId } = userRoom;
-      const room = activeRooms.get(roomId);
+    if (!userRoom) return;
 
-      if (room) {
-        room.users.delete(userId);
-        updateRoomActivity(roomId);
+    const { roomId, userId } = userRoom;
+    const room = activeRooms.get(roomId);
 
-        // Clean up empty rooms
-        if (room.users.size === EMPTY_ROOM_SIZE) {
-          activeRooms.delete(roomId);
-        } else {
-          // Notify remaining users
-          socket.to(roomId).emit("user-left", {
-            userId,
-            users: Array.from(room.users),
-            userCount: room.users.size,
-          });
-        }
+    if (room) {
+      // Find and remove the user object from the Set
+      const userToRemove = Array.from(room.users).find(
+        (user) => user.userId === userId
+      );
+      if (userToRemove) {
+        room.users.delete(userToRemove);
       }
+      updateRoomActivity(roomId);
 
-      userRooms.delete(socket.id);
+      if (room.users.size === EMPTY_ROOM_SIZE) {
+        activeRooms.delete(roomId);
+      } else {
+        // Get array of fullNames for display
+        const userNames = Array.from(room.users).map((user) => user.fullName);
+        socket.to(roomId).emit("user-left", {
+          userId,
+          users: userNames,
+          userCount: room.users.size,
+        });
+      }
     }
+
+    userRooms.delete(socket.id);
   });
 });
 
