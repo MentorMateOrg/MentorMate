@@ -193,22 +193,40 @@ io.on("connection", (socket) => {
     const room = activeRooms.get(roomId);
     if (!room) return;
 
+    const oldText = room.code;
+    const newText = data.code;
+    const operations = generateDeltas(oldText, newText);
+
     // Update room code and activity
     room.code = data.code;
     updateRoomActivity(roomId);
 
-    await prisma.roomSession.create({
+    const versionId = crypto.randomUUID();
+
+    await prisma.codeChange.create({
       data: {
-        room: {
-          connect: { roomId },
-        },
-        user: {
-          connect: { id: parseInt(userId) },
-        },
-        code: data.code,
-        language: room.language,
+        roomId: parseInt(roomId),
+        userId: parseInt(userId),
+        versionId,
+        parentId: room.lastVersionId || null,
+        operations,
       },
     });
+
+    room.lastVersionId = versionId;
+
+    // await prisma.roomSession.create({
+    //   data: {
+    //     room: {
+    //       connect: { roomId },
+    //     },
+    //     user: {
+    //       connect: { id: parseInt(userId) },
+    //     },
+    //     code: data.code,
+    //     language: room.language,
+    //   },
+    // });
 
     // Broadcast to all other users in the room
     socket.to(roomId).emit("code-update", {
