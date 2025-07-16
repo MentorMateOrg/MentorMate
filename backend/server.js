@@ -7,6 +7,7 @@ import githubRoutes from "./routes/github.routes.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 // Route files
 import authRoutes from "./routes/auth.routes.js";
@@ -16,6 +17,8 @@ import connectionRoutes from "./routes/connection.routes.js";
 import recommendationRoutes from "./routes/recommendation.routes.js";
 import searchRoutes from "./routes/search.routes.js";
 import { parse } from "path";
+import roomRoutes from "./routes/room.routes.js";
+import generateDeltas from "./utils/delta.js";
 
 const app = express();
 const httpServer = createServer(app); // Create HTTP server
@@ -42,6 +45,7 @@ app.use("/api/connection", connectionRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/github", githubRoutes);
+app.use("/api/rooms", roomRoutes);
 
 // Basic Express route
 app.get("/", (req, res) => {
@@ -215,18 +219,18 @@ io.on("connection", (socket) => {
 
     room.lastVersionId = versionId;
 
-    // await prisma.roomSession.create({
-    //   data: {
-    //     room: {
-    //       connect: { roomId },
-    //     },
-    //     user: {
-    //       connect: { id: parseInt(userId) },
-    //     },
-    //     code: data.code,
-    //     language: room.language,
-    //   },
-    // });
+    await prisma.roomSession.create({
+      data: {
+        room: {
+          connect: { roomId },
+        },
+        user: {
+          connect: { id: parseInt(userId) },
+        },
+        code: data.code,
+        language: room.language,
+      },
+    });
 
     // Broadcast to all other users in the room
     socket.to(roomId).emit("code-update", {
@@ -253,6 +257,37 @@ io.on("connection", (socket) => {
       language: data.language,
       userId: data.userId,
     });
+  });
+
+  socket.on("save-version", async (data) => {
+    const userRoom = userRooms.get(socket.id);
+    if (!userRoom) return;
+
+    const { roomId, userId } = userRoom;
+    const room = activeRooms.get(roomId);
+    if (!room) return;
+
+    const versionId = crypto.randomUUID();
+
+    try {
+      // Generate operations from the current room code and the new code
+      const operations = generateDeltas(room.code, data.code);
+
+      await prisma.codeChange.create({
+        data: {
+          roomId: roomId,
+          userId: parseInt(userId),
+          versionId,
+          parentId: room.lastVersionId || null,
+          operations,
+        },
+      });
+
+      room.lastVersionId = versionId;
+      alert(`Version saved for room ${roomId} by user ${userId}`);
+    } catch (err) {
+      alert("Error saving version:", err);
+    }
   });
 
   // Handle disconnect

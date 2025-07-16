@@ -4,15 +4,12 @@ import Editor from "@monaco-editor/react";
 
 import { jwtDecode } from "jwt-decode";
 
-
 const SOCKET_URL = "http://localhost:5000";
 const DEFAULT_LANGUAGE = "javascript";
 const EDITOR_THEME = "vs-dark";
 const DEBOUNCE_DELAY = 300;
 
-const ANONYMOUS = "Anonymous"
-
-
+const ANONYMOUS = "Anonymous";
 
 const SUPPORTED_LANGUAGES = [
   { value: "javascript", label: "JavaScript" },
@@ -39,6 +36,7 @@ export default function LiveCodingEditor() {
   const [connectedUsers, setConnectedUsers] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const debounceRef = useRef(null);
+  const prevCodeRef = useRef(code);
 
   useEffect(() => {
     if (!codingEditor) return;
@@ -88,9 +86,12 @@ export default function LiveCodingEditor() {
   const joinRoom = () => {
     const token = localStorage.getItem("token");
     let fullName = ANONYMOUS;
+    let userIdFromToken = "";
     if (token) {
       const decoded = jwtDecode(token);
       fullName = decoded.fullName;
+      userIdFromToken = decoded.id.toString();
+      setUserId(userIdFromToken);
     }
     if (socket && roomId.trim() && token) {
       socket.emit("join-room", roomId.trim(), token, fullName);
@@ -128,6 +129,13 @@ export default function LiveCodingEditor() {
   };
 
   const connectionStatus = getConnectionStatus();
+
+  const handleSaveVersion = () => {
+    if (socket && isConnected) {
+      socket.emit("save-version", { code, userId });
+      prevCodeRef.current = code;
+    }
+  };
 
   return (
     <>
@@ -202,7 +210,6 @@ export default function LiveCodingEditor() {
                   <span className="text-sm">Active Users:</span>
                   <div className="flex gap-1">
                     {connectedUsers.map((fullName, index) => (
-
                       <span
                         key={index}
                         className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
@@ -233,6 +240,12 @@ export default function LiveCodingEditor() {
                 }}
               />
             </div>
+            <button
+              onClick={handleSaveVersion}
+              className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
+            >
+              Save Version
+            </button>
           </div>
         </div>
       )}

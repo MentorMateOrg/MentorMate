@@ -1,4 +1,4 @@
-export default function generateDeltals(oldStr, newStr) {
+export default function generateDeltas(oldStr, newStr) {
   const DELETE = "delete";
   const INSERT = "insert";
   let ops = [];
