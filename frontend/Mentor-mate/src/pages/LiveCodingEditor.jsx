@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import Editor from "@monaco-editor/react";
+import VersionSidebar from "../components/VersionSidebar";
 
 import { jwtDecode } from "jwt-decode";
 
@@ -38,6 +39,7 @@ export default function LiveCodingEditor() {
   const [userId, setUserId] = useState("");
   const [connectedUsers, setConnectedUsers] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [showVersionSidebar, setShowVersionSidebar] = useState(false);
   const debounceRef = useRef(null);
 
   useEffect(() => {
@@ -129,6 +131,15 @@ export default function LiveCodingEditor() {
 
   const connectionStatus = getConnectionStatus();
 
+
+  const handleSaveVersion = () => {
+    if (socket && isConnected) {
+      socket.emit("save-version", { code, userId });
+      prevCodeRef.current = code;
+      setShowVersionSidebar(true); // Show the sidebar when saving a version
+    }
+  };
+
   return (
     <>
       <button
@@ -215,23 +226,43 @@ export default function LiveCodingEditor() {
               </div>
             )}
 
-            <div className="flex-1 p-4">
-              <Editor
-                height="100%"
-                language={language}
-                value={code}
-                theme={EDITOR_THEME}
-                onChange={handleCodeChange}
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 14,
-                  wordWrap: "on",
-                  automaticLayout: true,
-                  scrollBeyondLastLine: false,
-                  renderWhitespace: "selection",
-                  tabSize: 2,
-                }}
-              />
+            <div className="flex-1 flex">
+              <div className="flex-1 p-4">
+                <Editor
+                  height="100%"
+                  language={language}
+                  value={code}
+                  theme={EDITOR_THEME}
+                  onChange={handleCodeChange}
+                  options={{
+                    minimap: { enabled: false },
+                    fontSize: 14,
+                    wordWrap: "on",
+                    automaticLayout: true,
+                    scrollBeyondLastLine: false,
+                    renderWhitespace: "selection",
+                    tabSize: 2,
+                  }}
+                />
+              </div>
+              {isConnected &&
+                connectedUsers.length > 0 &&
+                showVersionSidebar && (
+                  <VersionSidebar
+                    roomId={roomId}
+                    baseCode={code}
+                    setEditorCode={setCode}
+                    onClose={() => setShowVersionSidebar(false)}
+                  />
+                )}
+            </div>
+            <div className="p-4 border-t">
+              <button
+                onClick={handleSaveVersion}
+                className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
+              >
+                Save Version
+              </button>
             </div>
           </div>
         </div>
