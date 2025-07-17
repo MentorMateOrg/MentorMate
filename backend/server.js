@@ -188,7 +188,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle code changes
+  // Handle code changes (real-time collaboration, no version saving)
   socket.on("code-change", async (data) => {
     const userRoom = userRooms.get(socket.id);
     if (!userRoom) return;
@@ -204,6 +204,7 @@ io.on("connection", (socket) => {
     // Update room code and activity
     room.code = data.code;
     updateRoomActivity(roomId);
+
 
     const versionId = crypto.randomUUID();
 
@@ -226,11 +227,12 @@ io.on("connection", (socket) => {
         },
         user: {
           connect: { id: parseInt(userId) },
+
         },
-        code: data.code,
-        language: room.language,
-      },
-    });
+      });
+    } catch (error) {
+      //will handle error later
+    }
 
     // Broadcast to all other users in the room
     socket.to(roomId).emit("code-update", {
@@ -276,6 +278,7 @@ io.on("connection", (socket) => {
       await prisma.codeChange.create({
         data: {
           roomId: roomId,
+
           userId: parseInt(userId),
           versionId,
           parentId: room.lastVersionId || null,
@@ -287,6 +290,7 @@ io.on("connection", (socket) => {
       alert(`Version saved for room ${roomId} by user ${userId}`);
     } catch (err) {
       alert("Error saving version:", err);
+
     }
   });
 

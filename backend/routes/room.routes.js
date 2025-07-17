@@ -29,6 +29,7 @@ router.get("/room/:roomId/history", async (req, res) => {
 
     res.json(
       room.codeChanges.map((change) => ({
+
         versionId: change.versionId,
         parentId: change.parentId,
         timestamp: change.timestamp,
@@ -37,7 +38,6 @@ router.get("/room/:roomId/history", async (req, res) => {
       }))
     );
   } catch (error) {
-    alert("Error fetching room history:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
