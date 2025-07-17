@@ -16,6 +16,10 @@ import connectionRoutes from "./routes/connection.routes.js";
 import recommendationRoutes from "./routes/recommendation.routes.js";
 import searchRoutes from "./routes/search.routes.js";
 import { parse } from "path";
+import roomRoutes from "./routes/room.routes.js";
+import generateDeltas from "./utils/delta.js";
+import { applyOperations } from "./utils/applyOps.js";
+
 
 const app = express();
 const httpServer = createServer(app); // Create HTTP server
@@ -184,7 +188,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle code changes
+  // Handle code changes (real-time collaboration, no version saving)
   socket.on("code-change", async (data) => {
     const userRoom = userRooms.get(socket.id);
     if (!userRoom) return;
@@ -197,18 +201,24 @@ io.on("connection", (socket) => {
     room.code = data.code;
     updateRoomActivity(roomId);
 
-    await prisma.roomSession.create({
-      data: {
-        room: {
-          connect: { roomId },
+
+    try {
+      // Only save the current session state, not as a version
+      await prisma.roomSession.create({
+        data: {
+          room: {
+            connect: { roomId },
+          },
+          user: {
+            connect: { id: parseInt(userId) },
+          },
+          code: data.code,
+          language: room.language,
         },
-        user: {
-          connect: { id: parseInt(userId) },
-        },
-        code: data.code,
-        language: room.language,
-      },
-    });
+      });
+    } catch (error) {
+      //will handle error later
+    }
 
     // Broadcast to all other users in the room
     socket.to(roomId).emit("code-update", {
@@ -235,6 +245,86 @@ io.on("connection", (socket) => {
       language: data.language,
       userId: data.userId,
     });
+  });
+
+  socket.on("save-version", async (data) => {
+    const userRoom = userRooms.get(socket.id);
+    if (!userRoom) return;
+
+    const { roomId, userId } = userRoom;
+    const room = activeRooms.get(roomId);
+    if (!room) return;
+
+    const versionId = crypto.randomUUID();
+
+    try {
+      // First find the room by roomId (string) to get the integer id
+      const dbRoom = await prisma.room.findUnique({
+        where: { roomId: roomId },
+      });
+
+      if (!dbRoom) {
+        //error"Room not found in database" ;
+        return;
+      }
+
+      // Get the base code to generate operations from
+      let baseCode = DEFAULT_CODE_TEMPLATE;
+
+      // If there's a previous version, reconstruct the code at that point
+      if (room.lastVersionId) {
+        try {
+          // Get all versions up to the last saved version
+          const allVersions = await prisma.codeChange.findMany({
+            where: { roomId: dbRoom.id },
+            orderBy: { timestamp: "asc" },
+          });
+
+          // Reconstruct the code at the last version
+          let reconstructedCode = DEFAULT_CODE_TEMPLATE;
+          const versionChain = [];
+
+          // Build chain from root to last version
+          let current = allVersions.find(
+            (v) => v.versionId === room.lastVersionId
+          );
+          while (current) {
+            versionChain.unshift(current);
+            current = allVersions.find((v) => v.versionId === current.parentId);
+          }
+
+          // Apply operations to reconstruct the last saved state
+          for (const change of versionChain) {
+            reconstructedCode = applyOperations(
+              reconstructedCode,
+              change.operations
+            );
+          }
+
+          baseCode = reconstructedCode;
+        } catch (error) {
+          // If reconstruction fails, use default template
+          baseCode = DEFAULT_CODE_TEMPLATE;
+        }
+      }
+
+      // Generate operations from the base code to the current code
+      const operations = generateDeltas(baseCode, data.code);
+
+      await prisma.codeChange.create({
+        data: {
+          roomId: dbRoom.id, // Use the integer id from the database
+          userId: parseInt(userId),
+          versionId,
+          parentId: room.lastVersionId || null,
+          operations,
+        },
+      });
+
+      room.lastVersionId = versionId;
+    } catch (err) {
+      //error: Error saving version
+    }
   });
 
   // Handle disconnect
