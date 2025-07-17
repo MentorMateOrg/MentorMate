@@ -7,6 +7,7 @@ import githubRoutes from "./routes/github.routes.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 // Route files
 import authRoutes from "./routes/auth.routes.js";
@@ -18,8 +19,6 @@ import searchRoutes from "./routes/search.routes.js";
 import { parse } from "path";
 import roomRoutes from "./routes/room.routes.js";
 import generateDeltas from "./utils/delta.js";
-import { applyOperations } from "./utils/applyOps.js";
-
 
 const app = express();
 const httpServer = createServer(app); // Create HTTP server
@@ -46,6 +45,7 @@ app.use("/api/connection", connectionRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/github", githubRoutes);
+app.use("/api/rooms", roomRoutes);
 
 // Basic Express route
 app.get("/", (req, res) => {
@@ -197,23 +197,37 @@ io.on("connection", (socket) => {
     const room = activeRooms.get(roomId);
     if (!room) return;
 
+    const oldText = room.code;
+    const newText = data.code;
+    const operations = generateDeltas(oldText, newText);
+
     // Update room code and activity
     room.code = data.code;
     updateRoomActivity(roomId);
 
 
-    try {
-      // Only save the current session state, not as a version
-      await prisma.roomSession.create({
-        data: {
-          room: {
-            connect: { roomId },
-          },
-          user: {
-            connect: { id: parseInt(userId) },
-          },
-          code: data.code,
-          language: room.language,
+    const versionId = crypto.randomUUID();
+
+    await prisma.codeChange.create({
+      data: {
+        roomId: parseInt(roomId),
+        userId: parseInt(userId),
+        versionId,
+        parentId: room.lastVersionId || null,
+        operations,
+      },
+    });
+
+    room.lastVersionId = versionId;
+
+    await prisma.roomSession.create({
+      data: {
+        room: {
+          connect: { roomId },
+        },
+        user: {
+          connect: { id: parseInt(userId) },
+
         },
       });
     } catch (error) {
@@ -258,62 +272,13 @@ io.on("connection", (socket) => {
     const versionId = crypto.randomUUID();
 
     try {
-      // First find the room by roomId (string) to get the integer id
-      const dbRoom = await prisma.room.findUnique({
-        where: { roomId: roomId },
-      });
-
-      if (!dbRoom) {
-        //error"Room not found in database" ;
-        return;
-      }
-
-      // Get the base code to generate operations from
-      let baseCode = DEFAULT_CODE_TEMPLATE;
-
-      // If there's a previous version, reconstruct the code at that point
-      if (room.lastVersionId) {
-        try {
-          // Get all versions up to the last saved version
-          const allVersions = await prisma.codeChange.findMany({
-            where: { roomId: dbRoom.id },
-            orderBy: { timestamp: "asc" },
-          });
-
-          // Reconstruct the code at the last version
-          let reconstructedCode = DEFAULT_CODE_TEMPLATE;
-          const versionChain = [];
-
-          // Build chain from root to last version
-          let current = allVersions.find(
-            (v) => v.versionId === room.lastVersionId
-          );
-          while (current) {
-            versionChain.unshift(current);
-            current = allVersions.find((v) => v.versionId === current.parentId);
-          }
-
-          // Apply operations to reconstruct the last saved state
-          for (const change of versionChain) {
-            reconstructedCode = applyOperations(
-              reconstructedCode,
-              change.operations
-            );
-          }
-
-          baseCode = reconstructedCode;
-        } catch (error) {
-          // If reconstruction fails, use default template
-          baseCode = DEFAULT_CODE_TEMPLATE;
-        }
-      }
-
-      // Generate operations from the base code to the current code
-      const operations = generateDeltas(baseCode, data.code);
+      // Generate operations from the current room code and the new code
+      const operations = generateDeltas(room.code, data.code);
 
       await prisma.codeChange.create({
         data: {
-          roomId: dbRoom.id, // Use the integer id from the database
+          roomId: roomId,
+
           userId: parseInt(userId),
           versionId,
           parentId: room.lastVersionId || null,
@@ -322,8 +287,10 @@ io.on("connection", (socket) => {
       });
 
       room.lastVersionId = versionId;
+      alert(`Version saved for room ${roomId} by user ${userId}`);
     } catch (err) {
-      //error: Error saving version
+      alert("Error saving version:", err);
+
     }
   });
 
