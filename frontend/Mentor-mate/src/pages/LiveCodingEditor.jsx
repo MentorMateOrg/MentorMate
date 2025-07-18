@@ -132,14 +132,12 @@ export default function LiveCodingEditor() {
 
   const connectionStatus = getConnectionStatus();
 
-
   const handleSaveVersion = () => {
     if (socket && isConnected) {
       socket.emit("save-version", { code, userId });
       prevCodeRef.current = code;
 
       setShowVersionSidebar(true); // Show the sidebar when saving a version
-
     }
   };
 
@@ -266,12 +264,7 @@ export default function LiveCodingEditor() {
                 Save Version
               </button>
             </div>
-            <button
-              onClick={handleSaveVersion}
-              className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
-            >
-              Save Version
-            </button>
+            
           </div>
         </div>
       )}
