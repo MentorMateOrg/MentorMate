@@ -24,24 +24,24 @@ function VersionSidebar({ setEditorCode, onClose, versions = [] }) {
   };
 
   return (
-    <div className="p-2 sm:p-3 md:p-4 border-r w-full sm:w-72 md:w-80 lg:w-96 xl:w-80 overflow-y-auto bg-white">
-      <div className="flex justify-between items-center mb-3 md:mb-4">
-        <h2 className="font-bold text-sm sm:text-base md:text-lg">
+    <div className="w-1/5 border-l bg-white flex flex-col h-full">
+      <div className="flex justify-between items-center p-4 border-b">
+        <h2 className="font-bold text-lg">
           Version History
         </h2>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-lg sm:text-xl md:text-base p-1 hover:bg-gray-100 rounded"
+             className="text-gray-500 hover:text-gray-700 text-xl p-1 hover:bg-gray-100 rounded"
             aria-label="Close version sidebar"
           >
             ✕
           </button>
         )}
       </div>
-
+      <div className="flex-1 overflow-y-auto p-4">
       {versions.length === 0 && (
-        <div className="text-xs sm:text-sm text-gray-500 text-center py-4">
+        <div className="text-sm text-gray-500 text-center py-4">
           No versions found
         </div>
       )}
@@ -52,7 +52,7 @@ function VersionSidebar({ setEditorCode, onClose, versions = [] }) {
           versions.map((v) => (
             <div
               key={v.versionId}
-              className="cursor-pointer hover:bg-gray-100 active:bg-gray-200 p-2 sm:p-3 rounded-md border border-transparent hover:border-gray-200 transition-all duration-150"
+             className="cursor-pointer hover:bg-gray-100 active:bg-gray-200 p-3 rounded-md border border-transparent hover:border-gray-200 transition-all duration-150"
               onClick={() => reconstructVersion(v.versionId)}
             >
               <p className="text-xs sm:text-sm font-medium text-gray-800 truncate">
@@ -68,6 +68,7 @@ function VersionSidebar({ setEditorCode, onClose, versions = [] }) {
               </p>
             </div>
           ))}
+          </div>
       </div>
     </div>
   );

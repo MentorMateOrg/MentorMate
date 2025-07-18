@@ -262,8 +262,14 @@ export default function LiveCodingEditor() {
               </div>
             )}
 
-            <div className="flex-1 flex">
-              <div className="flex-1 p-4">
+            <div className="flex-1 flex h-full">
+              <div
+                className={`p-4 ${
+                  showVersionSidebar && isConnected && connectedUsers.length > 0
+                    ? "w-4/5"
+                    : "w-full"
+                } transition-all duration-300`}
+              >
                 <Editor
                   height="100%"
                   language={language}
