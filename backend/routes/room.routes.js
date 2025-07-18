@@ -29,7 +29,6 @@ router.get("/room/:roomId/history", async (req, res) => {
 
     res.json(
       room.codeChanges.map((change) => ({
-
         versionId: change.versionId,
         parentId: change.parentId,
         timestamp: change.timestamp,

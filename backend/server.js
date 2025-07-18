@@ -205,29 +205,28 @@ io.on("connection", (socket) => {
     room.code = data.code;
     updateRoomActivity(roomId);
 
-
     const versionId = crypto.randomUUID();
-
-    await prisma.codeChange.create({
-      data: {
-        roomId: parseInt(roomId),
-        userId: parseInt(userId),
-        versionId,
-        parentId: room.lastVersionId || null,
-        operations,
-      },
-    });
-
-    room.lastVersionId = versionId;
-
-    await prisma.roomSession.create({
-      data: {
-        room: {
-          connect: { roomId },
+    try {
+      await prisma.codeChange.create({
+        data: {
+          roomId: roomId,
+          userId: parseInt(userId),
+          versionId,
+          parentId: room.lastVersionId || null,
+          operations,
         },
-        user: {
-          connect: { id: parseInt(userId) },
+      });
 
+      room.lastVersionId = versionId;
+
+      await prisma.roomSession.create({
+        data: {
+          room: {
+            connect: { roomId },
+          },
+          user: {
+            connect: { id: parseInt(userId) },
+          },
         },
       });
     } catch (error) {
@@ -278,7 +277,6 @@ io.on("connection", (socket) => {
       await prisma.codeChange.create({
         data: {
           roomId: roomId,
-
           userId: parseInt(userId),
           versionId,
           parentId: room.lastVersionId || null,
@@ -288,10 +286,7 @@ io.on("connection", (socket) => {
 
       room.lastVersionId = versionId;
       alert(`Version saved for room ${roomId} by user ${userId}`);
-    } catch (err) {
-      alert("Error saving version:", err);
-
-    }
+    } catch (err) {}
   });
 
   // Handle disconnect
