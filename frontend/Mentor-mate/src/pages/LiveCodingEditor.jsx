@@ -39,6 +39,30 @@ export default function LiveCodingEditor() {
   const [showVersionSidebar, setShowVersionSidebar] = useState(false);
   const debounceRef = useRef(null);
   const prevCodeRef = useRef(code);
+  const [versions, setVersions] = useState([]);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("success");
+
+  const showToast = (message, type = "success") => {
+    setToastMessage(message);
+    setToastType(type);
+    setTimeout(() => setToastMessage(""), 3000);
+  };
+
+  const fetchVersions = async () => {
+    try {
+      const res = await fetch(`/api/rooms/room/${roomId}/history`);
+      if (res.ok) {
+        const data = await res.json();
+        setVersions(data);
+        showToast("Version history loaded", "success");
+      } else {
+        showToast("Failed to fetch versions", "error");
+      }
+    } catch (error) {
+      showToast("An error occurred while loading versions", "error");
+    }
+  };
 
   useEffect(() => {
     if (!codingEditor) return;
@@ -137,12 +161,22 @@ export default function LiveCodingEditor() {
       socket.emit("save-version", { code, userId });
       prevCodeRef.current = code;
 
-      setShowVersionSidebar(true); // Show the sidebar when saving a version
+      fetchVersions(); // Fetch saved versions quietly
+      setShowVersionSidebar(true); // Open the sidebar
     }
   };
 
   return (
     <>
+      {toastMessage && (
+        <div
+          className={`fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white transition-opacity duration-300 ${
+            toastType === "success" ? "bg-green-500" : "bg-red-500"
+          }`}
+        >
+          {toastMessage}
+        </div>
+      )}
       <button
         onClick={() => setCodingEditor(true)}
         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -253,6 +287,7 @@ export default function LiveCodingEditor() {
                     baseCode={code}
                     setEditorCode={setCode}
                     onClose={() => setShowVersionSidebar(false)}
+                    versions={versions}
                   />
                 )}
             </div>
@@ -264,7 +299,6 @@ export default function LiveCodingEditor() {
                 Save Version
               </button>
             </div>
-            
           </div>
         </div>
       )}
