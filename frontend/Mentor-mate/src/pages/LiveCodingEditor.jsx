@@ -43,10 +43,9 @@ export default function LiveCodingEditor() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("success");
 
-  const showToast = (message, type = "success") => {
+  const showToast = (message) => {
     setToastMessage(message);
-    setToastType(type);
-    setTimeout(() => setToastMessage(""), 3000);
+    setTimeout(() => setToastMessage(""), 4000);
   };
 
   const fetchVersions = async () => {
@@ -55,12 +54,9 @@ export default function LiveCodingEditor() {
       if (res.ok) {
         const data = await res.json();
         setVersions(data);
-        showToast("Version history loaded", "success");
-      } else {
-        showToast("Failed to fetch versions", "error");
       }
     } catch (error) {
-      showToast("An error occurred while loading versions", "error");
+      alert("Error fetching versions:", error);
     }
   };
 
@@ -101,6 +97,13 @@ export default function LiveCodingEditor() {
 
     newSocket.on("room-error", (data) => {
       alert(`Room Error: ${data.error}`);
+    });
+
+    newSocket.on("version-saved", (data) => {
+      alert("Version saved event received:", data);
+      // Automatically refresh versions when someone saves a new version
+      fetchVersions();
+      showToast(`${data.userName} saved a version`);
     });
 
     return () => {
@@ -170,9 +173,8 @@ export default function LiveCodingEditor() {
     <>
       {toastMessage && (
         <div
-          className={`fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white transition-opacity duration-300 ${
-            toastType === "success" ? "bg-green-500" : "bg-red-500"
-          }`}
+          className="fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white transition-opacity duration-300 z-[9999] bg-green-500"
+          style={{ zIndex: 9999 }}
         >
           {toastMessage}
         </div>
