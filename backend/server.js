@@ -306,11 +306,16 @@ io.on("connection", (socket) => {
       room.lastVersionId = versionId;
       room.code = data.code; // Update room code to the saved version
 
+      // Get user info for the notification
+      const userRoom = userRooms.get(socket.id);
+      const userInfo = userRoom ? userRoom.fullName : "Unknown User";
+
       // Notify all users in the room that a version was saved
       io.to(roomId).emit("version-saved", {
         versionId,
         userId,
-        message: "New version saved",
+        userName: userInfo,
+        message: `New version saved by ${userInfo}`,
       });
     } catch (err) {}
   });
