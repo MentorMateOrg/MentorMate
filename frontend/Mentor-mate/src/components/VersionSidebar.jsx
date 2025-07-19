@@ -1,55 +1,7 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React from "react";
+import applyOperations from "../utils/applyOperations";
 
-// Frontend version of applyOperations function
-const applyOperations = (baseCode, operations) => {
-  const DELETE = "delete";
-  const INSERT = "insert";
-  let result = baseCode;
-  for (const op of operations) {
-    if (op.type === DELETE) {
-      result = result.slice(0, op.pos) + result.slice(op.pos + op.length);
-    } else if (op.type === INSERT) {
-      result = result.slice(0, op.pos) + op.text + result.slice(op.pos);
-    }
-  }
-  return result;
-};
-
-export default function VersionSidebar({
-  roomId,
-  baseCode,
-  setEditorCode,
-  onClose,
-}) {
-  const [versions, setVersions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (!roomId) return;
-
-    setLoading(true);
-    setError(null);
-
-    axios
-      .get(`http://localhost:5000/api/rooms/${roomId}/history`)
-      .then((res) => {
-        if (Array.isArray(res.data)) {
-          setVersions(res.data);
-        } else {
-          setVersions([]);
-        }
-      })
-      .catch(() => {
-        setError("Failed to load version history");
-        setVersions([]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [roomId]);
-
+function VersionSidebar({ setEditorCode, onClose, versions = [] }) {
   const reconstructVersion = (versionId) => {
     // Start with the initial base code (welcome message)
     let code =
@@ -72,49 +24,54 @@ export default function VersionSidebar({
   };
 
   return (
-    <div className="p-4 border-r w-60 overflow-y-auto">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="font-bold">Version History</h2>
+    <div className="w-1/5 border-l bg-white flex flex-col h-full">
+      <div className="flex justify-between items-center p-4 border-b">
+        <h2 className="font-bold text-lg">
+          Version History
+        </h2>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-sm"
+             className="text-gray-500 hover:text-gray-700 text-xl p-1 hover:bg-gray-100 rounded"
+            aria-label="Close version sidebar"
           >
             ✕
           </button>
         )}
       </div>
-
-      {loading && (
-        <div className="text-sm text-gray-500">Loading versions...</div>
-      )}
-
-      {error && (
-        <div className="text-sm text-red-500 p-2 bg-red-50 rounded">
-          {error}
+      <div className="flex-1 overflow-y-auto p-4">
+      {versions.length === 0 && (
+        <div className="text-sm text-gray-500 text-center py-4">
+          No versions found
         </div>
       )}
 
-      {!loading && !error && versions.length === 0 && (
-        <div className="text-sm text-gray-500">No versions found</div>
-      )}
-
-      {!loading &&
-        !error &&
-        Array.isArray(versions) &&
-        versions.length > 0 &&
-        versions.map((v) => (
-          <div
-            key={v.versionId}
-            className="cursor-pointer hover:bg-gray-100 p-2 rounded"
-            onClick={() => reconstructVersion(v.versionId)}
-          >
-            <p className="text-sm font-medium">{v.author}</p>
-            <p className="text-xs text-gray-500">
-              {new Date(v.timestamp).toLocaleString()}
-            </p>
+      <div className="space-y-2">
+        {Array.isArray(versions) &&
+          versions.length > 0 &&
+          versions.map((v) => (
+            <div
+              key={v.versionId}
+             className="cursor-pointer hover:bg-gray-100 active:bg-gray-200 p-3 rounded-md border border-transparent hover:border-gray-200 transition-all duration-150"
+              onClick={() => reconstructVersion(v.versionId)}
+            >
+              <p className="text-xs sm:text-sm font-medium text-gray-800 truncate">
+                {v.author}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {new Date(v.timestamp).toLocaleString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+          ))}
           </div>
-        ))}
+      </div>
     </div>
   );
 }
+
+export default VersionSidebar;

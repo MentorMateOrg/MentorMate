@@ -11,9 +11,12 @@ export default function generateDeltas(oldStr, newStr) {
 
   //Delete old tail
   if (i < oldStr.length) {
-    ops.push({ type: DELETE, pos: i, length: oldStr.length - 1 });
-
-
+    ops.push({
+      type: DELETE,
+      pos: i,
+      length: oldStr.length - i,
+    });
+  }
   //Insert new tail
   if (i < newStr.length) {
     ops.push({ type: INSERT, pos: i, text: newStr.slice(i) });

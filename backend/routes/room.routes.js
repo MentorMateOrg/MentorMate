@@ -7,7 +7,6 @@ const prisma = new PrismaClient();
 
 router.get("/room/:roomId/history", async (req, res) => {
   const { roomId } = req.params;
-
   try {
     const room = await prisma.room.findUnique({
       where: { roomId: roomId },
@@ -29,7 +28,6 @@ router.get("/room/:roomId/history", async (req, res) => {
 
     res.json(
       room.codeChanges.map((change) => ({
-
         versionId: change.versionId,
         parentId: change.parentId,
         timestamp: change.timestamp,
