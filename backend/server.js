@@ -219,7 +219,7 @@ io.on("connection", (socket) => {
     });
 
     room.lastVersionId = versionId;
-
+try{
     await prisma.roomSession.create({
       data: {
         room: {
@@ -229,7 +229,7 @@ io.on("connection", (socket) => {
           connect: { id: parseInt(userId) },
 
         },
-      });
+      }});
     } catch (error) {
       //will handle error later
     }
