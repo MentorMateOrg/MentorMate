@@ -188,7 +188,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle code changes (real-time collaboration, no version saving)
+  // Handle code changes with OT
   socket.on("code-change", async (data) => {
     const userRoom = userRooms.get(socket.id);
     if (!userRoom) return;
@@ -199,46 +199,72 @@ io.on("connection", (socket) => {
 
     const oldText = room.code;
     const newText = data.code;
-    const operations = generateDeltas(oldText, newText);
 
-    // Update room code and activity
-    room.code = data.code;
+    // Generate operations from client's changes
+    const clientOps = generateDeltas(oldText, newText);
+
+    // If there are concurrent operations that haven't been applied yet
+    if (room.pendingOps && room.pendingOps.length > 0) {
+      // Transform client operations against all pending operations
+      let transformedClientOps = clientOps;
+      for (const pendingOp of room.pendingOps) {
+        transformedClientOps = transformOp(transformedClientOps, pendingOp);
+      }
+
+      // Apply transformed operations to the current room state
+      room.code = applyOperations(room.code, transformedClientOps);
+
+      // Add transformed client operations to pending operations
+      room.pendingOps.push(transformedClientOps);
+    } else {
+      // No concurrent operations, just apply directly
+      room.code = newText;
+      room.pendingOps = [clientOps];
+    }
+
     updateRoomActivity(roomId);
-
 
     const versionId = crypto.randomUUID();
 
+    // Store the operation in the database
     await prisma.codeChange.create({
       data: {
         roomId: parseInt(roomId),
         userId: parseInt(userId),
         versionId,
         parentId: room.lastVersionId || null,
-        operations,
+        operations: clientOps,
       },
     });
 
     room.lastVersionId = versionId;
 
-    await prisma.roomSession.create({
-      data: {
-        room: {
-          connect: { roomId },
-        },
-        user: {
-          connect: { id: parseInt(userId) },
-
+    try {
+      await prisma.roomSession.create({
+        data: {
+          room: {
+            connect: { roomId },
+          },
+          user: {
+            connect: { id: parseInt(userId) },
+          },
+          code: room.code,
+          language: room.language,
         },
       });
     } catch (error) {
-      //will handle error later
+      throw new Error("Error saving room session:", error);
     }
 
     // Broadcast to all other users in the room
     socket.to(roomId).emit("code-update", {
-      code: data.code,
+      code: room.code,
       userId,
+      operations: clientOps,
     });
+
+    // Clear pending operations after successful broadcast
+    room.pendingOps = [];
   });
 
   // Handle language changes
@@ -290,7 +316,6 @@ io.on("connection", (socket) => {
       alert(`Version saved for room ${roomId} by user ${userId}`);
     } catch (err) {
       alert("Error saving version:", err);
-
     }
   });
 
