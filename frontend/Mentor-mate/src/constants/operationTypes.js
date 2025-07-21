@@ -3,8 +3,6 @@ export const OP_RETAIN = 'retain';
 export const OP_INSERT = 'insert';
 export const OP_DELETE = 'delete';
 
-// Create frontend/Mentor-mate/src/utils/operationUtils.js
-import { OP_RETAIN, OP_INSERT, OP_DELETE } from '../constants/operationTypes.js';
 
 /**
  * Apply operations to a text string

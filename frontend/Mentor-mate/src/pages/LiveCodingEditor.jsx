@@ -55,7 +55,6 @@ export default function LiveCodingEditor() {
   const [monacoInstance, setMonacoInstance] = useState(null);
   const cursorDebounceRef = useRef(null);
 
-  useEffect(() => {
     const handleEditorDidMount = (editor, monaco) => {
       setEditorInstance(editor);
       setMonacoInstance(monaco);
@@ -77,7 +76,7 @@ export default function LiveCodingEditor() {
         }, 100);
       });
     };
-
+useEffect(() => {
     if (!codingEditor) return;
 
     const newSocket = io(SOCKET_URL, {
@@ -386,18 +385,12 @@ export default function LiveCodingEditor() {
             </div>
             <div className="p-4 border-t">
               <button
-                onClick={handleSaveVersion}
+                onClick={setShowVersionSidebar(!showVersionSidebar)}
                 className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
               >
-                Save Version
+               {showVersionSidebar ? "Hide History" : "Show History"}
               </button>
             </div>
-            <button
-              onClick={handleSaveVersion}
-              className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
-            >
-              Save Version
-            </button>
           </div>
         </div>
       )}
