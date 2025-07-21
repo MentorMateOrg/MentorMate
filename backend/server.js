@@ -319,8 +319,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Add to server.js
-
   // Get version history with operations
   socket.on("get-version-history", async (roomId) => {
     try {
@@ -377,6 +375,92 @@ io.on("connection", (socket) => {
     } catch (error) {
       socket.emit("error", {
         message: "Failed to apply version",
+        error: error.message,
+      });
+    }
+  });
+
+  // Handle conflict resolution between two versions
+  socket.on("resolve-conflict", async (data) => {
+    const { roomId, version1Id, version2Id } = data;
+    const userRoom = userRooms.get(socket.id);
+    if (!userRoom) return;
+
+    try {
+      // Find the common ancestor of the two versions
+      const commonAncestorId = await findCommonAncestor(
+        version1Id,
+        version2Id,
+        roomId
+      );
+
+      if (!commonAncestorId) {
+        socket.emit("error", { message: "No common ancestor found" });
+        return;
+      }
+
+      // Get operations from common ancestor to version1
+      const ops1 = await getOperationChain(
+        commonAncestorId,
+        version1Id,
+        roomId
+      );
+
+      // Get operations from common ancestor to version2
+      const ops2 = await getOperationChain(
+        commonAncestorId,
+        version2Id,
+        roomId
+      );
+
+      // Transform ops2 against ops1
+      const transformedOps2 = transformOp(ops2.operations, ops1.operations);
+
+      // Get the room
+      const room = activeRooms.get(roomId);
+      if (!room) return;
+
+      // Apply transformed operations to version1's code
+      const baseCode = applyOperations("", ops1.operations); // Start with empty string and apply ops1
+      const mergedCode = applyOperations(baseCode, transformedOps2);
+
+      // Update room code
+      room.code = mergedCode;
+
+      // Create a new version for the merged code
+      const mergedVersionId = crypto.randomUUID();
+
+      // Save the merged version
+      await prisma.codeChange.create({
+        data: {
+          room: {
+            connect: { roomId },
+          },
+          user: {
+            connect: { id: parseInt(userRoom.userId) },
+          },
+          versionId: mergedVersionId,
+          parentId: version1Id, // Use version1 as parent
+          operations: transformedOps2,
+        },
+      });
+
+      room.lastVersionId = mergedVersionId;
+
+      // Broadcast the merged code to all users
+      io.to(roomId).emit("code-update", {
+        code: mergedCode,
+        userId: userRoom.userId,
+        versionId: mergedVersionId,
+      });
+
+      socket.emit("conflict-resolved", {
+        versionId: mergedVersionId,
+        message: "Conflict resolved successfully",
+      });
+    } catch (error) {
+      socket.emit("error", {
+        message: "Failed to resolve conflict",
         error: error.message,
       });
     }
