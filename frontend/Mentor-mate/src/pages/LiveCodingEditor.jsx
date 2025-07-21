@@ -5,6 +5,15 @@ import VersionSidebar from "../components/VersionSidebar";
 
 import { jwtDecode } from "jwt-decode";
 
+import { applyOperations } from "../utils/operationUtils";
+import {
+  createChangeDecorations,
+  addUserHighlightStyles,
+  getUserColor,
+  createCursorDecoration,
+  addUserCursorStyles,
+} from "../utils/editorDecorations";
+
 const SOCKET_URL = "http://localhost:5000";
 const DEFAULT_LANGUAGE = "javascript";
 const EDITOR_THEME = "vs-dark";
@@ -39,8 +48,36 @@ export default function LiveCodingEditor() {
   const [showVersionSidebar, setShowVersionSidebar] = useState(false);
   const debounceRef = useRef(null);
   const prevCodeRef = useRef(code);
+  const [decorations, setDecorations] = useState([]);
+  const [cursorDecorations, setCursorDecorations] = useState([]);
+  const [userColors, setUserColors] = useState({});
+  const [editorInstance, setEditorInstance] = useState(null);
+  const [monacoInstance, setMonacoInstance] = useState(null);
+  const cursorDebounceRef = useRef(null);
 
   useEffect(() => {
+    const handleEditorDidMount = (editor, monaco) => {
+      setEditorInstance(editor);
+      setMonacoInstance(monaco);
+
+      // Add cursor position tracking
+      editor.onDidChangeCursorPosition((e) => {
+        if (!socket || !isConnected) return;
+
+        if (cursorDebounceRef.current) {
+          clearTimeout(cursorDebounceRef.current);
+        }
+
+        cursorDebounceRef.current = setTimeout(() => {
+          const model = editor.getModel();
+          if (!model) return;
+
+          const position = model.getOffsetAt(e.position);
+          socket.emit("cursor-position", { position, roomId, userId });
+        }, 100);
+      });
+    };
+
     if (!codingEditor) return;
 
     const newSocket = io(SOCKET_URL, {
@@ -61,6 +98,95 @@ export default function LiveCodingEditor() {
 
     newSocket.on("code-update", (data) => {
       setCode(data.code);
+      // If operations are provided and we have editor instance, highlight changes
+      if (data.operations && editorInstance && monacoInstance) {
+        const model = editorInstance.getModel();
+        if (!model) return;
+
+        // Get or create color for this user
+        let userColor = userColors[data.userId];
+        if (!userColor) {
+          userColor = getUserColor(data.userId);
+          setUserColors((prev) => ({ ...prev, [data.userId]: userColor }));
+
+          // Add CSS styles for this user
+          addUserHighlightStyles(data.userId, userColor);
+        }
+
+        // Create decorations for the changes
+        const newDecorations = createChangeDecorations(
+          monacoInstance,
+          data.operations,
+          data.userId,
+          model
+        );
+
+        // Apply decorations to editor
+        if (newDecorations.length > 0) {
+          const decorationIds = editorInstance.deltaDecorations(
+            [],
+            newDecorations
+          );
+          setDecorations((prev) => [...prev, ...decorationIds]);
+
+          // Remove decorations after 3 seconds
+          setTimeout(() => {
+            editorInstance.deltaDecorations(decorationIds, []);
+            setDecorations((prev) =>
+              prev.filter((id) => !decorationIds.includes(id))
+            );
+          }, 3000);
+        }
+      }
+    });
+
+    newSocket.on("cursor-update", (data) => {
+      if (!editorInstance || !monacoInstance) return;
+
+      const { userId, fullName, position } = data;
+      const model = editorInstance.getModel();
+      if (!model) return;
+
+      // Get or create color for this user
+      let userColor = userColors[userId];
+      if (!userColor) {
+        userColor = getUserColor(userId);
+        setUserColors((prev) => ({ ...prev, [userId]: userColor }));
+
+        // Add CSS styles for this user's cursor
+        addUserCursorStyles(userId, userColor, fullName || "Anonymous");
+      }
+
+      // Create cursor decoration
+      const cursorDeco = createCursorDecoration(
+        monacoInstance,
+        position,
+        userId,
+        fullName || "Anonymous",
+        model
+      );
+
+      // Apply cursor decoration
+      // First, remove any existing cursor decoration for this user
+      const existingDecoIds = cursorDecorations
+        .filter((d) => d.userId === userId)
+        .map((d) => d.id);
+      if (existingDecoIds.length > 0) {
+        editorInstance.deltaDecorations(existingDecoIds, []);
+        setCursorDecorations((prev) => prev.filter((d) => d.userId !== userId));
+      }
+
+      // Then add the new cursor decoration
+      const decoIds = editorInstance.deltaDecorations([], [cursorDeco]);
+      setCursorDecorations((prev) => [...prev, { id: decoIds[0], userId }]);
+
+      // Remove cursor after 5 seconds of inactivity
+      setTimeout(() => {
+        editorInstance.deltaDecorations(decoIds, []);
+        setCursorDecorations((prev) =>
+          prev.filter((d) => !decoIds.includes(d.id))
+        );
+      }, 5000);
     });
 
     newSocket.on("language-update", (data) => {
@@ -132,14 +258,12 @@ export default function LiveCodingEditor() {
 
   const connectionStatus = getConnectionStatus();
 
-
   const handleSaveVersion = () => {
     if (socket && isConnected) {
       socket.emit("save-version", { code, userId });
       prevCodeRef.current = code;
 
       setShowVersionSidebar(true); // Show the sidebar when saving a version
-
     }
   };
 
@@ -236,8 +360,9 @@ export default function LiveCodingEditor() {
                   value={code}
                   theme={EDITOR_THEME}
                   onChange={handleCodeChange}
+                  onMount={handleEditorDidMount}
                   options={{
-                    minimap: { enabled: false },
+                    minimap: { enabled: true },
                     fontSize: 14,
                     wordWrap: "on",
                     automaticLayout: true,
@@ -255,6 +380,7 @@ export default function LiveCodingEditor() {
                     baseCode={code}
                     setEditorCode={setCode}
                     onClose={() => setShowVersionSidebar(false)}
+                    socket={socket}
                   />
                 )}
             </div>
