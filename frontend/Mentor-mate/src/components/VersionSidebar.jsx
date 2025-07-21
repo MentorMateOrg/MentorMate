@@ -1,78 +1,74 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
-// Frontend version of applyOperations function
-const applyOperations = (baseCode, operations) => {
-  const DELETE = "delete";
-  const INSERT = "insert";
-  let result = baseCode;
-  for (const op of operations) {
-    if (op.type === DELETE) {
-      result = result.slice(0, op.pos) + result.slice(op.pos + op.length);
-    } else if (op.type === INSERT) {
-      result = result.slice(0, op.pos) + op.text + result.slice(op.pos);
-    }
-  }
-  return result;
-};
+import { applyOperations } from "../constants/operationTypes";
 
 export default function VersionSidebar({
   roomId,
   baseCode,
   setEditorCode,
   onClose,
+  socket,
 }) {
   const [versions, setVersions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedVersionId, setSelectedVersionId] = useState(null);
 
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !socket) return;
 
     setLoading(true);
     setError(null);
+    //Request version history from server
+    socket.emit("get-version-history", roomId);
 
-    axios
-      .get(`http://localhost:5000/api/rooms/${roomId}/history`)
-      .then((res) => {
-        if (Array.isArray(res.data)) {
-          setVersions(res.data);
-        } else {
-          setVersions([]);
-        }
-      })
-      .catch(() => {
-        setError("Failed to load version history");
+    // Listen for version history response
+    const handleVersionHistory = (data) => {
+      if (Array.isArray(data.versions)) {
+        setVersions(data.versions);
+      } else {
         setVersions([]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [roomId]);
+      }
+      setLoading(false);
+    };
 
-  const reconstructVersion = (versionId) => {
-    // Start with the initial base code (welcome message)
-    let code =
-      "// Welcome to collaborative coding!\n// Start typing to see real-time updates";
-    const versionChain = [];
+    // Listen for errors
+    const handleError = (data) => {
+      setError(data.message || "An error occurred");
+      setLoading(false);
+    };
 
-    // Build the chain from root to the selected version
-    let current = versions.find((v) => v.versionId === versionId);
-    while (current) {
-      versionChain.unshift(current);
-      current = versions.find((v) => v.versionId === current.parentId);
-    }
+    // Listen for version applied event
+    const handleVersionApplied = (data) => {
+      setSelectedVersionId(data.versionId);
+    };
 
-    // Apply operations in chronological order
-    for (const change of versionChain) {
-      code = applyOperations(code, change.operations);
-    }
+    socket.on("version-history", handleVersionHistory);
+    socket.on("error", handleError);
+    socket.on("version-applied", handleVersionApplied);
 
-    setEditorCode(code);
+    return () => {
+      socket.off("version-history", handleVersionHistory);
+      socket.off("error", handleError);
+      socket.off("version-applied", handleVersionApplied);
+    };
+  }, [roomId, socket]);
+
+  const applyVersion = (versionId) => {
+    if (!socket) return;
+
+    setSelectedVersionId(versionId);
+    socket.emit("apply-version", { roomId, versionId });
+  };
+
+  const resolveConflict = (version1Id, version2Id) => {
+    if (!socket) return;
+
+    socket.emit("resolve-conflict", { roomId, version1Id, version2Id });
   };
 
   return (
-    <div className="p-4 border-r w-60 overflow-y-auto">
+    <div className="p-4 border-r w-72 overflow-y-auto">
       <div className="flex justify-between items-center mb-2">
         <h2 className="font-bold">Version History</h2>
         {onClose && (
@@ -99,22 +95,41 @@ export default function VersionSidebar({
         <div className="text-sm text-gray-500">No versions found</div>
       )}
 
-      {!loading &&
-        !error &&
-        Array.isArray(versions) &&
-        versions.length > 0 &&
-        versions.map((v) => (
-          <div
-            key={v.versionId}
-            className="cursor-pointer hover:bg-gray-100 p-2 rounded"
-            onClick={() => reconstructVersion(v.versionId)}
-          >
-            <p className="text-sm font-medium">{v.author}</p>
-            <p className="text-xs text-gray-500">
-              {new Date(v.timestamp).toLocaleString()}
-            </p>
-          </div>
-        ))}
+      {!loading && !error && Array.isArray(versions) && versions.length > 0 && (
+        <div className="space-y-2">
+          {versions.map((v) => (
+            <div
+              key={v.versionId}
+              className={`cursor-pointer p-2 rounded ${
+                selectedVersionId === v.versionId
+                  ? "bg-blue-100 border border-blue-300"
+                  : "hover:bg-gray-100"
+              }`}
+              onClick={() => applyVersion(v.versionId)}
+            >
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-medium">
+                  {v.user?.profile?.full_name || "Unknown User"}
+                </p>
+                {selectedVersionId && selectedVersionId !== v.versionId && (
+                  <button
+                    className="text-xs bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      resolveConflict(selectedVersionId, v.versionId);
+                    }}
+                  >
+                    Merge
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-500">
+                {new Date(v.timestamp).toLocaleString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
