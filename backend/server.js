@@ -319,6 +319,69 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Add to server.js
+
+  // Get version history with operations
+  socket.on("get-version-history", async (roomId) => {
+    try {
+      const versions = await getVersionHistory(roomId);
+      socket.emit("version-history", { versions });
+    } catch (error) {
+      socket.emit("error", {
+        message: "Failed to fetch version history",
+        error: error.message,
+      });
+    }
+  });
+
+  // Apply a specific version
+  socket.on("apply-version", async (data) => {
+    const { roomId, versionId } = data;
+    const userRoom = userRooms.get(socket.id);
+    if (!userRoom) return;
+
+    try {
+      // Get the version to apply
+      const version = await prisma.codeChange.findFirst({
+        where: { roomId: parseInt(roomId), versionId },
+      });
+
+      if (!version) {
+        socket.emit("error", { message: "Version not found" });
+        return;
+      }
+
+      const room = activeRooms.get(roomId);
+      if (!room) return;
+
+      // Get all operations between current version and target version
+      const operationChain = await getOperationChain(
+        room.lastVersionId,
+        versionId,
+        roomId
+      );
+
+      // Apply the operations to the current code
+      const newCode = applyOperations(room.code, operationChain.operations);
+      room.code = newCode;
+      room.lastVersionId = versionId;
+
+      // Broadcast the new code to all users in the room
+      io.to(roomId).emit("code-update", {
+        code: newCode,
+        userId: userRoom.userId,
+        versionId,
+      });
+
+      socket.emit("version-applied", { versionId });
+    } catch (error) {
+      socket.emit("error", {
+        message: "Failed to apply version",
+        error: error.message,
+      });
+    }
+  });
+
   // Handle disconnect
   socket.on("disconnect", () => {
     const userRoom = userRooms.get(socket.id);
