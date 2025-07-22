@@ -16,9 +16,58 @@ import userRoutes from "./routes/user.routes.js";
 import connectionRoutes from "./routes/connection.routes.js";
 import recommendationRoutes from "./routes/recommendation.routes.js";
 import searchRoutes from "./routes/search.routes.js";
-import { parse } from "path";
 import roomRoutes from "./routes/room.routes.js";
 import generateDeltas from "./utils/delta.js";
+
+// Function to reconstruct a version from operations
+const reconstructVersion = async (roomId, versionId) => {
+  if (!versionId) {
+    return DEFAULT_CODE_TEMPLATE;
+  }
+
+  try {
+    // Get all versions for this room
+    const versions = await prisma.codeChange.findMany({
+      where: { roomId: roomId },
+      orderBy: { timestamp: "asc" },
+    });
+
+    // Build the chain from root to the target version
+    const versionChain = [];
+    let current = versions.find((v) => v.versionId === versionId);
+
+    while (current) {
+      versionChain.unshift(current);
+      current = versions.find((v) => v.versionId === current.parentId);
+    }
+
+    // Start with the base template and apply operations in chronological order
+    let code = DEFAULT_CODE_TEMPLATE;
+    for (const change of versionChain) {
+      code = applyOperations(code, change.operations);
+    }
+
+    return code;
+  } catch (error) {
+    return DEFAULT_CODE_TEMPLATE;
+  }
+};
+
+// Function to apply operations to code
+const applyOperations = (baseCode, operations) => {
+  const DELETE = "delete";
+  const INSERT = "insert";
+  let result = baseCode;
+
+  for (const op of operations) {
+    if (op.type === DELETE) {
+      result = result.slice(0, op.pos) + result.slice(op.pos + op.length);
+    } else if (op.type === INSERT) {
+      result = result.slice(0, op.pos) + op.text + result.slice(op.pos);
+    }
+  }
+  return result;
+};
 
 const app = express();
 const httpServer = createServer(app); // Create HTTP server
@@ -53,13 +102,12 @@ app.get("/", (req, res) => {
 });
 
 // Constants
-const SOCKET_ID_SUBSTRING_LENGTH = 2;
 const EMPTY_ROOM_SIZE = 0;
 const MAX_ROOM_CAPACITY = 10;
 const ROOM_INACTIVITY_TIMEOUT = 3600000; // 1 hour in milliseconds
 const DEFAULT_LANGUAGE = "javascript";
-const DEFAULT_CODE_TEMPLATE = `// Welcome to collaborative coding!
-// Start typing to see real-time updates`;
+const DEFAULT_CODE_TEMPLATE =
+  "// Welcome to collaborative coding!\n// Start typing to see real-time updates";
 
 // Store active rooms and users
 const activeRooms = new Map();
@@ -90,7 +138,6 @@ const validateRoomAccess = (roomId, userId) => {
   if (room && room.users.size >= MAX_ROOM_CAPACITY) {
     return { valid: false, error: "Room is at maximum capacity" };
   }
-
   return { valid: true };
 };
 
@@ -227,6 +274,7 @@ io.on("connection", (socket) => {
     const versionId = crypto.randomUUID();
 
     // Store the operation in the database
+
     await prisma.codeChange.create({
       data: {
         roomId: parseInt(roomId),
@@ -250,12 +298,12 @@ io.on("connection", (socket) => {
           },
           code: room.code,
           language: room.language,
+
         },
       });
     } catch (error) {
       throw new Error("Error saving room session:", error);
     }
-
     // Broadcast to all other users in the room
     socket.to(roomId).emit("code-update", {
       code: room.code,
@@ -298,13 +346,15 @@ io.on("connection", (socket) => {
     const versionId = crypto.randomUUID();
 
     try {
-      // Generate operations from the current room code and the new code
-      const operations = generateDeltas(room.code, data.code);
+      // Reconstruct the parent version to use as base for comparison
+      const baseCode = await reconstructVersion(roomId, room.lastVersionId);
+
+      // Generate operations from the base code to the new code
+      const operations = generateDeltas(baseCode, data.code);
 
       await prisma.codeChange.create({
         data: {
           roomId: roomId,
-
           userId: parseInt(userId),
           versionId,
           parentId: room.lastVersionId || null,
@@ -312,7 +362,9 @@ io.on("connection", (socket) => {
         },
       });
 
+      // Update room state
       room.lastVersionId = versionId;
+
       alert(`Version saved for room ${roomId} by user ${userId}`);
     } catch (err) {
       alert("Error saving version:", err);
@@ -464,6 +516,7 @@ io.on("connection", (socket) => {
         error: error.message,
       });
     }
+
   });
 
   // Handle disconnect
