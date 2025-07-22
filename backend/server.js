@@ -208,26 +208,28 @@ io.on("connection", (socket) => {
 
     const versionId = crypto.randomUUID();
 
-    await prisma.codeChange.create({
-      data: {
-        roomId: parseInt(roomId),
-        userId: parseInt(userId),
-        versionId,
-        parentId: room.lastVersionId || null,
-        operations,
-      },
-    });
-
-    room.lastVersionId = versionId;
-
-    await prisma.roomSession.create({
-      data: {
-        room: {
-          connect: { roomId },
+    try {
+      await prisma.codeChange.create({
+        data: {
+          roomId: parseInt(roomId),
+          userId: parseInt(userId),
+          versionId,
+          parentId: room.lastVersionId || null,
+          operations,
         },
-        user: {
-          connect: { id: parseInt(userId) },
+      });
 
+      room.lastVersionId = versionId;
+
+      await prisma.roomSession.create({
+        data: {
+          room: {
+            connect: { roomId },
+          },
+          user: {
+            connect: { id: parseInt(userId) },
+
+          },
         },
       });
     } catch (error) {
@@ -287,10 +289,11 @@ io.on("connection", (socket) => {
       });
 
       room.lastVersionId = versionId;
-      alert(`Version saved for room ${roomId} by user ${userId}`);
+      console.log(`Version saved for room ${roomId} by user ${userId}`);
+      socket.emit("version-saved", { versionId });
     } catch (err) {
-      alert("Error saving version:", err);
-
+      console.error("Error saving version:", err);
+      socket.emit("error", { message: "Failed to save version" });
     }
   });
 
