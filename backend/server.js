@@ -248,6 +248,33 @@ io.on("connection", (socket) => {
     room.code = data.code;
     updateRoomActivity(roomId);
 
+    const versionId = crypto.randomUUID();
+
+    await prisma.codeChange.create({
+      data: {
+        roomId: parseInt(roomId),
+        userId: parseInt(userId),
+        versionId,
+        parentId: room.lastVersionId || null,
+        operations,
+      },
+    });
+
+    room.lastVersionId = versionId;
+try{
+    await prisma.roomSession.create({
+      data: {
+        room: {
+          connect: { roomId },
+        },
+        user: {
+          connect: { id: parseInt(userId) },
+
+        },
+      }});
+    } catch (error) {
+      //will handle error later
+    }
     // Broadcast to all other users in the room
     socket.to(roomId).emit("code-update", {
       code: data.code,
