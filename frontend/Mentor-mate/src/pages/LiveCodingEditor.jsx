@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import Editor from "@monaco-editor/react";
 import VersionSidebar from "../components/VersionSidebar";
+import { SOCKET_URL } from "../config";
 
 import { jwtDecode } from "jwt-decode";
 
@@ -14,7 +15,7 @@ import {
   addUserCursorStyles,
 } from "../utils/editorDecorations";
 
-const SOCKET_URL = "http://localhost:5000";
+// SOCKET_URL is now imported from config.js
 const DEFAULT_LANGUAGE = "javascript";
 const EDITOR_THEME = "vs-dark";
 const DEBOUNCE_DELAY = 300;
@@ -55,28 +56,28 @@ export default function LiveCodingEditor() {
   const [monacoInstance, setMonacoInstance] = useState(null);
   const cursorDebounceRef = useRef(null);
 
-    const handleEditorDidMount = (editor, monaco) => {
-      setEditorInstance(editor);
-      setMonacoInstance(monaco);
+  const handleEditorDidMount = (editor, monaco) => {
+    setEditorInstance(editor);
+    setMonacoInstance(monaco);
 
-      // Add cursor position tracking
-      editor.onDidChangeCursorPosition((e) => {
-        if (!socket || !isConnected) return;
+    // Add cursor position tracking
+    editor.onDidChangeCursorPosition((e) => {
+      if (!socket || !isConnected) return;
 
-        if (cursorDebounceRef.current) {
-          clearTimeout(cursorDebounceRef.current);
-        }
+      if (cursorDebounceRef.current) {
+        clearTimeout(cursorDebounceRef.current);
+      }
 
-        cursorDebounceRef.current = setTimeout(() => {
-          const model = editor.getModel();
-          if (!model) return;
+      cursorDebounceRef.current = setTimeout(() => {
+        const model = editor.getModel();
+        if (!model) return;
 
-          const position = model.getOffsetAt(e.position);
-          socket.emit("cursor-position", { position, roomId, userId });
-        }, 100);
-      });
-    };
-useEffect(() => {
+        const position = model.getOffsetAt(e.position);
+        socket.emit("cursor-position", { position, roomId, userId });
+      }, 100);
+    });
+  };
+  useEffect(() => {
     if (!codingEditor) return;
 
     const newSocket = io(SOCKET_URL, {
@@ -385,10 +386,16 @@ useEffect(() => {
             </div>
             <div className="p-4 border-t">
               <button
-                onClick={setShowVersionSidebar(!showVersionSidebar)}
-                className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
+                onClick={handleSaveVersion}
+                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
               >
-               {showVersionSidebar ? "Hide History" : "Show History"}
+                Save Version
+              </button>
+              <button
+                onClick={() => setShowVersionSidebar(!showVersionSidebar)}
+                className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm ml-4"
+              >
+                {showVersionSidebar ? "Hide History" : "Show History"}
               </button>
             </div>
           </div>

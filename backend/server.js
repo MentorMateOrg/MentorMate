@@ -19,13 +19,23 @@ import searchRoutes from "./routes/search.routes.js";
 import { parse } from "path";
 import roomRoutes from "./routes/room.routes.js";
 import generateDeltas from "./utils/delta.js";
+import { applyOperations } from "./utils/applyOps.js";
+import { transformOp } from "./utils/transform.js";
+import {
+  getVersionHistory,
+  getOperationChain,
+  findCommonAncestor,
+} from "./utils/versionUtils.js";
 
 const app = express();
 const httpServer = createServer(app); // Create HTTP server
 const io = new Server(httpServer, {
   // Initialize Socket.io
   cors: {
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://mentormate-frontend.onrender.com",
+    ],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -34,7 +44,16 @@ const io = new Server(httpServer, {
 const prisma = new PrismaClient();
 dotenv.config();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://mentormate-frontend.onrender.com",
+    ],
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Routes
@@ -313,9 +332,10 @@ io.on("connection", (socket) => {
       });
 
       room.lastVersionId = versionId;
-      alert(`Version saved for room ${roomId} by user ${userId}`);
+
+      socket.emit("version-saved", { versionId });
     } catch (err) {
-      alert("Error saving version:", err);
+      socket.emit("error", { message: "Failed to save version" });
     }
   });
 

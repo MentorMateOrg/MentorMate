@@ -74,8 +74,8 @@ model Room {
 
 model RoomSession {
   id Int @id @default(autoincrement())
-  room Room @relation(fields: [roomId], references: [id])
-  roomId Int
+  room Room @relation(fields: [roomId], references: [roomId])
+  roomId String
   userId Int
   user User @relation("UserRoomSessions", fields: [userId], references: [id])
   code String
@@ -85,8 +85,8 @@ model RoomSession {
 
 model CodeChange{
   id Int @id @default(autoincrement())
-  room Room @relation(fields: [roomId], references: [id])
-  roomId Int
+  room Room @relation(fields: [roomId], references: [roomId])
+  roomId String
   user User @relation( fields: [userId], references: [id])
   userId Int
   timestamp DateTime @default(now())
