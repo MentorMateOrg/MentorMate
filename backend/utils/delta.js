@@ -55,3 +55,4 @@ export default function generateDeltas(oldText, newText) {
 
   return normalizeOps(operations);
 }
+

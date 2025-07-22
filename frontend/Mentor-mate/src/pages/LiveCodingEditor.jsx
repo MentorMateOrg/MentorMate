@@ -48,6 +48,7 @@ export default function LiveCodingEditor() {
   const [showVersionSidebar, setShowVersionSidebar] = useState(false);
   const debounceRef = useRef(null);
   const prevCodeRef = useRef(code);
+
   const [decorations, setDecorations] = useState([]);
   const [cursorDecorations, setCursorDecorations] = useState([]);
   const [userColors, setUserColors] = useState({});
@@ -66,6 +67,27 @@ export default function LiveCodingEditor() {
         if (cursorDebounceRef.current) {
           clearTimeout(cursorDebounceRef.current);
         }
+
+  const [versions, setVersions] = useState([]);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("success");
+
+  const showToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(""), 4000);
+  };
+
+  const fetchVersions = async () => {
+    try {
+      const res = await fetch(`/api/rooms/room/${roomId}/history`);
+      if (res.ok) {
+        const data = await res.json();
+        setVersions(data);
+      }
+    } catch (error) {
+      alert("Error fetching versions:", error);
+    }
+  };
 
         cursorDebounceRef.current = setTimeout(() => {
           const model = editor.getModel();
@@ -204,6 +226,13 @@ useEffect(() => {
       alert(`Room Error: ${data.error}`);
     });
 
+    newSocket.on("version-saved", (data) => {
+      alert("Version saved event received:", data);
+      // Automatically refresh versions when someone saves a new version
+      fetchVersions();
+      showToast(`${data.userName} saved a version`);
+    });
+
     return () => {
       newSocket.close();
       setIsConnected(false);
@@ -262,12 +291,22 @@ useEffect(() => {
       socket.emit("save-version", { code, userId });
       prevCodeRef.current = code;
 
-      setShowVersionSidebar(true); // Show the sidebar when saving a version
+      fetchVersions(); // Fetch saved versions quietly
+      setShowVersionSidebar(true); // Open the sidebar
+
     }
   };
 
   return (
     <>
+      {toastMessage && (
+        <div
+          className="fixed top-4 right-4 px-4 py-2 rounded shadow-lg text-white transition-opacity duration-300 z-[9999] bg-green-500"
+          style={{ zIndex: 9999 }}
+        >
+          {toastMessage}
+        </div>
+      )}
       <button
         onClick={() => setCodingEditor(true)}
         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -351,8 +390,14 @@ useEffect(() => {
               </div>
             )}
 
-            <div className="flex-1 flex">
-              <div className="flex-1 p-4">
+            <div className="flex-1 flex h-full">
+              <div
+                className={`p-4 ${
+                  showVersionSidebar && isConnected && connectedUsers.length > 0
+                    ? "w-4/5"
+                    : "w-full"
+                } transition-all duration-300`}
+              >
                 <Editor
                   height="100%"
                   language={language}
@@ -379,7 +424,10 @@ useEffect(() => {
                     baseCode={code}
                     setEditorCode={setCode}
                     onClose={() => setShowVersionSidebar(false)}
+
                     socket={socket}
+
+                    versions={versions}
                   />
                 )}
             </div>
