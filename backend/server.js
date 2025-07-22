@@ -235,7 +235,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle code changes (real-time collaboration, no version saving)
+  // Handle code changes with OT
   socket.on("code-change", async (data) => {
     const userRoom = userRooms.get(socket.id);
     if (!userRoom) return;
@@ -244,33 +244,50 @@ io.on("connection", (socket) => {
     const room = activeRooms.get(roomId);
     if (!room) return;
 
-    // Update room code and activity
-    room.code = data.code;
+    const oldText = room.code;
+    const newText = data.code;
+
+    // Generate operations from client's changes
+    const clientOps = generateDeltas(oldText, newText);
+
+    // If there are concurrent operations that haven't been applied yet
+    if (room.pendingOps && room.pendingOps.length > 0) {
+      // Transform client operations against all pending operations
+      let transformedClientOps = clientOps;
+      for (const pendingOp of room.pendingOps) {
+        transformedClientOps = transformOp(transformedClientOps, pendingOp);
+      }
+
+      // Apply transformed operations to the current room state
+      room.code = applyOperations(room.code, transformedClientOps);
+
+      // Add transformed client operations to pending operations
+      room.pendingOps.push(transformedClientOps);
+    } else {
+      // No concurrent operations, just apply directly
+      room.code = newText;
+      room.pendingOps = [clientOps];
+    }
+
     updateRoomActivity(roomId);
 
     const versionId = crypto.randomUUID();
-try{
+
+    // Store the operation in the database
+
     await prisma.codeChange.create({
       data: {
         roomId: parseInt(roomId),
         userId: parseInt(userId),
         versionId,
         parentId: room.lastVersionId || null,
-        operations,
+        operations: clientOps,
       },
     });
 
     room.lastVersionId = versionId;
 
-    await prisma.roomSession.create({
-      data: {
-        room: {
-          connect: { roomId },
-        },
-      }});
-
-      room.lastVersionId = versionId;
-
+    try {
       await prisma.roomSession.create({
         data: {
           room: {
@@ -278,18 +295,24 @@ try{
           },
           user: {
             connect: { id: parseInt(userId) },
-
           },
+          code: room.code,
+          language: room.language,
+
         },
       });
     } catch (error) {
-      //will handle error later
+      throw new Error("Error saving room session:", error);
     }
     // Broadcast to all other users in the room
     socket.to(roomId).emit("code-update", {
-      code: data.code,
+      code: room.code,
       userId,
+      operations: clientOps,
     });
+
+    // Clear pending operations after successful broadcast
+    room.pendingOps = [];
   });
 
   // Handle language changes
@@ -341,20 +364,159 @@ try{
 
       // Update room state
       room.lastVersionId = versionId;
-      room.code = data.code; // Update room code to the saved version
 
-      // Get user info for the notification
-      const userRoom = userRooms.get(socket.id);
-      const userInfo = userRoom ? userRoom.fullName : "Unknown User";
+      alert(`Version saved for room ${roomId} by user ${userId}`);
+    } catch (err) {
+      alert("Error saving version:", err);
+    }
+  });
 
-      // Notify all users in the room that a version was saved
-      io.to(roomId).emit("version-saved", {
-        versionId,
-        userId,
-        userName: userInfo,
-        message: `New version saved by ${userInfo}`,
+  // Get version history with operations
+  socket.on("get-version-history", async (roomId) => {
+    try {
+      const versions = await getVersionHistory(roomId);
+      socket.emit("version-history", { versions });
+    } catch (error) {
+      socket.emit("error", {
+        message: "Failed to fetch version history",
+        error: error.message,
       });
-    } catch (err) {}
+    }
+  });
+
+  // Apply a specific version
+  socket.on("apply-version", async (data) => {
+    const { roomId, versionId } = data;
+    const userRoom = userRooms.get(socket.id);
+    if (!userRoom) return;
+
+    try {
+      // Get the version to apply
+      const version = await prisma.codeChange.findFirst({
+        where: { roomId: parseInt(roomId), versionId },
+      });
+
+      if (!version) {
+        socket.emit("error", { message: "Version not found" });
+        return;
+      }
+
+      const room = activeRooms.get(roomId);
+      if (!room) return;
+
+      // Get all operations between current version and target version
+      const operationChain = await getOperationChain(
+        room.lastVersionId,
+        versionId,
+        roomId
+      );
+
+      // Apply the operations to the current code
+      const newCode = applyOperations(room.code, operationChain.operations);
+      room.code = newCode;
+      room.lastVersionId = versionId;
+
+      // Broadcast the new code to all users in the room
+      io.to(roomId).emit("code-update", {
+        code: newCode,
+        userId: userRoom.userId,
+        versionId,
+      });
+
+      socket.emit("version-applied", { versionId });
+    } catch (error) {
+      socket.emit("error", {
+        message: "Failed to apply version",
+        error: error.message,
+      });
+    }
+  });
+
+  // Handle conflict resolution between two versions
+  socket.on("resolve-conflict", async (data) => {
+    const { roomId, version1Id, version2Id } = data;
+    const userRoom = userRooms.get(socket.id);
+    if (!userRoom) return;
+
+    try {
+      // Find the common ancestor of the two versions
+      const commonAncestorId = await findCommonAncestor(
+        version1Id,
+        version2Id,
+        roomId
+      );
+
+      if (!commonAncestorId) {
+        socket.emit("error", { message: "No common ancestor found" });
+        return;
+      }
+
+      // Get operations from common ancestor to version1
+      const ops1 = await getOperationChain(
+        commonAncestorId,
+        version1Id,
+        roomId
+      );
+
+      // Get operations from common ancestor to version2
+      const ops2 = await getOperationChain(
+        commonAncestorId,
+        version2Id,
+        roomId
+      );
+
+      // Transform ops2 against ops1
+      const transformedOps2 = transformOp(ops2.operations, ops1.operations);
+
+      // Get the room
+      const room = activeRooms.get(roomId);
+      if (!room) return;
+
+      // Apply transformed operations to version1's code
+      const baseCode = applyOperations("", ops1.operations); // Start with empty string and apply ops1
+      const mergedCode = applyOperations(baseCode, transformedOps2);
+
+      // Update room code
+      room.code = mergedCode;
+
+      // Create a new version for the merged code
+      const mergedVersionId = crypto.randomUUID();
+
+      // Save the merged version
+      await prisma.codeChange.create({
+        data: {
+          room: {
+            connect: { roomId },
+          },
+          user: {
+            connect: { id: parseInt(userRoom.userId) },
+          },
+          versionId: mergedVersionId,
+          parentId: version1Id, // Use version1 as parent
+          operations: transformedOps2,
+        },
+      });
+
+      room.lastVersionId = mergedVersionId;
+
+      // Broadcast the merged code to all users
+      io.to(roomId).emit("code-update", {
+        code: mergedCode,
+        userId: userRoom.userId,
+        versionId: mergedVersionId,
+      });
+
+      socket.emit("conflict-resolved", {
+        versionId: mergedVersionId,
+        message: "Conflict resolved successfully",
+      });
+    } catch (error) {
+      socket.emit("error", {
+        message: "Failed to resolve conflict",
+        error: error.message,
+      });
+    }
+
   });
 
   // Handle disconnect
