@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/images/MentorMateLogo.jpg";
 import Navbar from "../components/Navbar";
-import MentorMatelogo from "../assets/images/MentorMateLogo.jpg";
+import MentorMatelogo from "../assets/images/MentorMatelogo.jpg";
 
 function Welcome() {
   const navigate = useNavigate();
