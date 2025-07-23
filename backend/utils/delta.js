@@ -4,7 +4,6 @@ import {
   createDeleteOp,
   normalizeOps,
 } from "./operationUtils.js";
-<<<<<<< HEAD
 import { SimpleMyers } from "./simpleMyers.js";
 
 // Create a single instance for reuse
@@ -34,21 +33,6 @@ function generateDeltasSimple(oldText, newText) {
   // Handle null/undefined inputs
   if (!oldText) oldText = "";
   if (!newText) newText = "";
-
-  const operations = [];
-  let i = 0;
-  let j = 0;
-=======
-
-/**
- * Generate operations to transform oldText into newText
- * Uses a simple but correct diff algorithm
- */
-export default function generateDeltas(oldText, newText) {
-  // Handle null/undefined inputs
-  if (!oldText) oldText = "";
-  if (!newText) newText = "";
->>>>>>> 295e9de (Feature: Rewrite delta generation algorithm to prevent infinite loops)
 
   const operations = [];
   let oldPos = 0;
