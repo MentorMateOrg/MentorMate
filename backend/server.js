@@ -77,9 +77,7 @@ const io = new Server(httpServer, {
   // Initialize Socket.io
   cors: {
     origin:
-      process.env.NODE_ENV === "production"
-        ? [process.env.FRONTEND_URL, "https://mentormate-frontend.onrender.com"]
-        : ["http://localhost:5173", "http://localhost:3000"],
+      process.env.FRONTEND_URL || "https://mentormate-frontend.onrender.com",
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -91,9 +89,7 @@ dotenv.config();
 app.use(
   cors({
     origin:
-      process.env.NODE_ENV === "production"
-        ? [process.env.FRONTEND_URL, "https://mentormate-frontend.onrender.com"]
-        : ["http://localhost:5173", "http://localhost:3000"],
+      process.env.FRONTEND_URL || "https://mentormate-frontend.onrender.com",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
