@@ -266,14 +266,35 @@ io.on("connection", (socket) => {
 
     const versionId = crypto.randomUUID();
 
+    // Ensure the room exists in DB before creating code change
+    await prisma.room.upsert({
+      where: { roomId },
+      update: {},
+      create: {
+        roomId,
+        title: `Room ${roomId}`,
+        createdById: parseInt(userId),
+      },
+    });
+
     // Store the operation in the database
+    // Get the room's integer ID for the foreign key relationship
+    const roomRecord = await prisma.room.findUnique({
+      where: { roomId: roomId },
+      select: { id: true },
+    });
+
+    if (!roomRecord) {
+      throw new Error(`Room with roomId ${roomId} not found`);
+    }
+
     await prisma.codeChange.create({
       data: {
-        roomId: roomId, // Use the string roomId directly
+        roomId: roomRecord.id, // Use the integer ID for the foreign key
         userId: parseInt(userId),
         versionId,
-        parentId: room.lastVersionId || null,
-        operations: JSON.parse(JSON.stringify(clientOps)), // Ensure proper JSON serialization
+        parentId: room.lastVersionId || undefined,
+        operations: clientOps,
       },
     });
 
@@ -343,23 +364,34 @@ io.on("connection", (socket) => {
       // Generate operations from the base code to the new code
       const operations = generateDeltas(baseCode, data.code);
 
-      // Get the room's numeric id using the roomId string
-      const roomData = await prisma.room.findUnique({
+      // Ensure the room exists in DB before creating code change
+      await prisma.room.upsert({
         where: { roomId },
+        update: {},
+        create: {
+          roomId,
+          title: `Room ${roomId}`,
+          createdById: parseInt(userId),
+        },
+      });
+
+      // Get the room's integer ID for the foreign key relationship
+      const roomRecord = await prisma.room.findUnique({
+        where: { roomId: roomId },
         select: { id: true },
       });
 
-      if (!roomData) {
+      if (!roomRecord) {
         throw new Error(`Room with roomId ${roomId} not found`);
       }
 
       await prisma.codeChange.create({
         data: {
-          roomId: roomId, // Use the string roomId directly
+          roomId: roomRecord.id, // Use the integer ID for the foreign key
           userId: parseInt(userId),
           versionId,
-          parentId: room.lastVersionId || null,
-          operations: operations, // Use the operations variable defined above
+          parentId: room.lastVersionId || undefined,
+          operations: operations,
         },
       });
 
@@ -379,8 +411,6 @@ io.on("connection", (socket) => {
       });
     }
   });
-
-  // Add to server.js
 
   // Get version history with operations
   socket.on("get-version-history", async (roomId) => {
@@ -505,20 +535,31 @@ io.on("connection", (socket) => {
       // Create a new version for the merged code
       const mergedVersionId = crypto.randomUUID();
 
-      // Get the room's numeric id using the roomId string
-      const roomData = await prisma.room.findUnique({
+      // Ensure the room exists in DB before creating code change
+      await prisma.room.upsert({
         where: { roomId },
+        update: {},
+        create: {
+          roomId,
+          title: `Room ${roomId}`,
+          createdById: parseInt(userRoom.userId),
+        },
+      });
+
+      // Get the room's integer ID for the foreign key relationship
+      const roomRecord = await prisma.room.findUnique({
+        where: { roomId: roomId },
         select: { id: true },
       });
 
-      if (!roomData) {
+      if (!roomRecord) {
         throw new Error(`Room with roomId ${roomId} not found`);
       }
 
       // Save the merged version
       await prisma.codeChange.create({
         data: {
-          roomId: roomId, // Use the string roomId directly
+          roomId: roomRecord.id, // Use the integer ID for the foreign key
           userId: parseInt(userRoom.userId),
           versionId: mergedVersionId,
           parentId: version1Id, // Use version1 as parent
