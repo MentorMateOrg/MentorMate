@@ -13,7 +13,7 @@ const prisma = new PrismaClient();
 export async function getOperationChain(fromVersionId, toVersionId, roomId) {
   // First, find the room by roomId
   const room = await prisma.room.findUnique({
-    where: { roomId }
+    where: { roomId },
   });
 
   if (!room) {
@@ -24,7 +24,7 @@ export async function getOperationChain(fromVersionId, toVersionId, roomId) {
   if (!fromVersionId) {
     // Get the target version
     const targetVersion = await prisma.codeChange.findFirst({
-      where: { versionId: toVersionId, roomId: room.id }
+      where: { versionId: toVersionId, roomId: roomId },
     });
 
     if (!targetVersion) {
@@ -33,14 +33,14 @@ export async function getOperationChain(fromVersionId, toVersionId, roomId) {
 
     return {
       operations: targetVersion.operations,
-      baseText: "" // Starting with empty text
+      baseText: "", // Starting with empty text
     };
   }
 
   // Get all versions in the room
   const allVersions = await prisma.codeChange.findMany({
-    where: { roomId: room.id },
-    orderBy: { timestamp: 'asc' }
+    where: { roomId: roomId },
+    orderBy: { timestamp: "asc" },
   });
 
   // Build a map of version IDs to their index in the array
@@ -67,19 +67,18 @@ export async function getOperationChain(fromVersionId, toVersionId, roomId) {
 
     return {
       operations: composedOps,
-      baseText: "" // The caller should have the base text
+      baseText: "", // The caller should have the base text
     };
   } else if (fromIndex > toIndex) {
-
     return {
       operations: allVersions[toIndex].operations,
-      baseText: "" // The caller should reconstruct the base text
+      baseText: "", // The caller should reconstruct the base text
     };
   } else {
     // Same version, no change
     return {
       operations: [],
-      baseText: "" // No change needed
+      baseText: "", // No change needed
     };
   }
 }
@@ -92,7 +91,7 @@ export async function getOperationChain(fromVersionId, toVersionId, roomId) {
 export async function getVersionHistory(roomId) {
   // First, find the room by roomId
   const room = await prisma.room.findUnique({
-    where: { roomId }
+    where: { roomId },
   });
 
   if (!room) {
@@ -101,9 +100,9 @@ export async function getVersionHistory(roomId) {
 
   // Then find all code changes for that room
   return prisma.codeChange.findMany({
-    where: { roomId: room.id }, // Use the room's numeric ID
-    orderBy: { timestamp: 'desc' },
-    include: { user: { include: { profile: true } } }
+    where: { roomId: roomId }, // Use the string roomId directly
+    orderBy: { timestamp: "desc" },
+    include: { user: { include: { profile: true } } },
   });
 }
 
@@ -117,7 +116,7 @@ export async function getVersionHistory(roomId) {
 export async function findCommonAncestor(versionId1, versionId2, roomId) {
   // First, find the room by roomId
   const room = await prisma.room.findUnique({
-    where: { roomId }
+    where: { roomId },
   });
 
   if (!room) {
@@ -126,13 +125,13 @@ export async function findCommonAncestor(versionId1, versionId2, roomId) {
 
   // Get all versions in the room
   const allVersions = await prisma.codeChange.findMany({
-    where: { roomId: room.id },
-    orderBy: { timestamp: 'asc' }
+    where: { roomId: roomId },
+    orderBy: { timestamp: "asc" },
   });
 
   // Build the version tree
   const versionTree = new Map();
-  allVersions.forEach(version => {
+  allVersions.forEach((version) => {
     versionTree.set(version.versionId, version.parentId);
   });
 

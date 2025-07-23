@@ -18,6 +18,13 @@ import recommendationRoutes from "./routes/recommendation.routes.js";
 import searchRoutes from "./routes/search.routes.js";
 import roomRoutes from "./routes/room.routes.js";
 import generateDeltas from "./utils/delta.js";
+import { transformOp } from "./utils/transform.js";
+import { applyOperations } from "./utils/applyOps.js";
+import {
+  getOperationChain,
+  getVersionHistory,
+  findCommonAncestor,
+} from "./utils/versionUtils.js";
 
 // Function to reconstruct a version from operations
 const reconstructVersion = async (roomId, versionId) => {
@@ -53,21 +60,7 @@ const reconstructVersion = async (roomId, versionId) => {
   }
 };
 
-// Function to apply operations to code
-const applyOperations = (baseCode, operations) => {
-  const DELETE = "delete";
-  const INSERT = "insert";
-  let result = baseCode;
-
-  for (const op of operations) {
-    if (op.type === DELETE) {
-      result = result.slice(0, op.pos) + result.slice(op.pos + op.length);
-    } else if (op.type === INSERT) {
-      result = result.slice(0, op.pos) + op.text + result.slice(op.pos);
-    }
-  }
-  return result;
-};
+// Note: We're now using the imported applyOperations function from utils/applyOps.js
 
 const app = express();
 const httpServer = createServer(app); // Create HTTP server
@@ -276,11 +269,11 @@ io.on("connection", (socket) => {
     // Store the operation in the database
     await prisma.codeChange.create({
       data: {
-        roomId: parseInt(roomId),
+        roomId: roomId, // Use the string roomId directly
         userId: parseInt(userId),
         versionId,
         parentId: room.lastVersionId || null,
-        operations: clientOps,
+        operations: JSON.parse(JSON.stringify(clientOps)), // Ensure proper JSON serialization
       },
     });
 
@@ -350,22 +343,40 @@ io.on("connection", (socket) => {
       // Generate operations from the base code to the new code
       const operations = generateDeltas(baseCode, data.code);
 
+      // Get the room's numeric id using the roomId string
+      const roomData = await prisma.room.findUnique({
+        where: { roomId },
+        select: { id: true },
+      });
+
+      if (!roomData) {
+        throw new Error(`Room with roomId ${roomId} not found`);
+      }
+
       await prisma.codeChange.create({
         data: {
-          roomId: roomId,
+          roomId: roomId, // Use the string roomId directly
           userId: parseInt(userId),
           versionId,
           parentId: room.lastVersionId || null,
-          operations,
+          operations: operations, // Use the operations variable defined above
         },
       });
 
       // Update room state
       room.lastVersionId = versionId;
 
-      alert(`Version saved for room ${roomId} by user ${userId}`);
+      // Emit an event to notify clients that a version was saved
+      io.to(roomId).emit("version-saved", {
+        versionId,
+        userId,
+        userName: userRoom.fullName || "Anonymous",
+      });
     } catch (err) {
-      alert("Error saving version:", err);
+      socket.emit("error", {
+        message: "Failed to save version",
+        error: err.message,
+      });
     }
   });
 
@@ -391,9 +402,19 @@ io.on("connection", (socket) => {
     if (!userRoom) return;
 
     try {
+      // Get the room's numeric id using the roomId string
+      const roomData = await prisma.room.findUnique({
+        where: { roomId },
+        select: { id: true },
+      });
+
+      if (!roomData) {
+        throw new Error(`Room with roomId ${roomId} not found`);
+      }
+
       // Get the version to apply
       const version = await prisma.codeChange.findFirst({
-        where: { roomId: parseInt(roomId), versionId },
+        where: { roomId: roomId, versionId },
       });
 
       if (!version) {
@@ -432,53 +453,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Apply a specific version
-  socket.on("apply-version", async (data) => {
-    const { roomId, versionId } = data;
-    const userRoom = userRooms.get(socket.id);
-    if (!userRoom) return;
-
-    try {
-      // Get the version to apply
-      const version = await prisma.codeChange.findFirst({
-        where: { roomId: parseInt(roomId), versionId },
-      });
-
-      if (!version) {
-        socket.emit("error", { message: "Version not found" });
-        return;
-      }
-
-      const room = activeRooms.get(roomId);
-      if (!room) return;
-
-      // Get all operations between current version and target version
-      const operationChain = await getOperationChain(
-        room.lastVersionId,
-        versionId,
-        roomId
-      );
-
-      // Apply the operations to the current code
-      const newCode = applyOperations(room.code, operationChain.operations);
-      room.code = newCode;
-      room.lastVersionId = versionId;
-
-      // Broadcast the new code to all users in the room
-      io.to(roomId).emit("code-update", {
-        code: newCode,
-        userId: userRoom.userId,
-        versionId,
-      });
-
-      socket.emit("version-applied", { versionId });
-    } catch (error) {
-      socket.emit("error", {
-        message: "Failed to apply version",
-        error: error.message,
-      });
-    }
-  });
+  // This is a duplicate handler and has been removed
 
   // Handle conflict resolution between two versions
   socket.on("resolve-conflict", async (data) => {
@@ -530,15 +505,21 @@ io.on("connection", (socket) => {
       // Create a new version for the merged code
       const mergedVersionId = crypto.randomUUID();
 
+      // Get the room's numeric id using the roomId string
+      const roomData = await prisma.room.findUnique({
+        where: { roomId },
+        select: { id: true },
+      });
+
+      if (!roomData) {
+        throw new Error(`Room with roomId ${roomId} not found`);
+      }
+
       // Save the merged version
       await prisma.codeChange.create({
         data: {
-          room: {
-            connect: { roomId },
-          },
-          user: {
-            connect: { id: parseInt(userRoom.userId) },
-          },
+          roomId: roomId, // Use the string roomId directly
+          userId: parseInt(userRoom.userId),
           versionId: mergedVersionId,
           parentId: version1Id, // Use version1 as parent
           operations: transformedOps2,
@@ -564,7 +545,6 @@ io.on("connection", (socket) => {
         error: error.message,
       });
     }
-
   });
 
   // Handle disconnect

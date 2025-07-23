@@ -48,6 +48,7 @@ export default function LiveCodingEditor() {
   const [showVersionSidebar, setShowVersionSidebar] = useState(false);
   const debounceRef = useRef(null);
   const prevCodeRef = useRef(code);
+  const [toastMessage, setToastMessage] = useState("");
 
   const [decorations, setDecorations] = useState([]);
   const [cursorDecorations, setCursorDecorations] = useState([]);
@@ -290,8 +291,6 @@ useEffect(() => {
     if (socket && isConnected) {
       socket.emit("save-version", { code, userId });
       prevCodeRef.current = code;
-
-      fetchVersions(); // Fetch saved versions quietly
       setShowVersionSidebar(true); // Open the sidebar
 
     }
@@ -426,14 +425,15 @@ useEffect(() => {
                     onClose={() => setShowVersionSidebar(false)}
 
                     socket={socket}
-
-                    versions={versions}
                   />
                 )}
             </div>
             <div className="p-4 border-t">
+            <button onClick={handleSaveVersion}>
+              Save Version
+            </button>
               <button
-                onClick={setShowVersionSidebar(!showVersionSidebar)}
+                onClick={ () => setShowVersionSidebar(!showVersionSidebar)}
                 className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
               >
                {showVersionSidebar ? "Hide History" : "Show History"}
