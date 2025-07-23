@@ -255,94 +255,80 @@ io.on("connection", (socket) => {
     const room = activeRooms.get(roomId);
     if (!room) return;
 
-    const oldText = room.code;
-    const newText = data.code;
-
-    // Generate operations from client's changes
-    const clientOps = generateDeltas(oldText, newText);
-
-    // If there are concurrent operations that haven't been applied yet
-    if (room.pendingOps && room.pendingOps.length > 0) {
-      // Transform client operations against all pending operations
-      let transformedClientOps = clientOps;
-      for (const pendingOp of room.pendingOps) {
-        transformedClientOps = transformOp(transformedClientOps, pendingOp);
-      }
-
-      // Apply transformed operations to the current room state
-      room.code = applyOperations(room.code, transformedClientOps);
-
-      // Add transformed client operations to pending operations
-      room.pendingOps.push(transformedClientOps);
-    } else {
-      // No concurrent operations, just apply directly
-      room.code = newText;
-      room.pendingOps = [clientOps];
-    }
-
-    updateRoomActivity(roomId);
-
-    const versionId = crypto.randomUUID();
-
-    // Ensure the room exists in DB before creating code change
-    await prisma.room.upsert({
-      where: { roomId },
-      update: {},
-      create: {
-        roomId,
-        title: `Room ${roomId}`,
-        createdById: parseInt(userId),
-      },
-    });
-
-    // Store the operation in the database
-    // Get the room's integer ID for the foreign key relationship
-    const roomRecord = await prisma.room.findUnique({
-      where: { roomId: roomId },
-      select: { id: true },
-    });
-
-    if (!roomRecord) {
-      throw new Error(`Room with roomId ${roomId} not found`);
-    }
-
-    await prisma.codeChange.create({
-      data: {
-        roomId: roomRecord.id, // Use the integer ID for the foreign key
-        userId: parseInt(userId),
-        versionId,
-        parentId: room.lastVersionId || undefined,
-        operations: clientOps,
-      },
-    });
-
-    room.lastVersionId = versionId;
-
     try {
-      await prisma.roomSession.create({
-        data: {
-          room: {
-            connect: { roomId },
-          },
-          user: {
-            connect: { id: parseInt(userId) },
-          },
-          code: room.code,
-          language: room.language,
+      const oldText = room.code;
+      const newText = data.code;
+
+      // Generate operations from client's changes
+      const clientOps = generateDeltas(oldText, newText);
+
+      // Apply operations directly to room state
+      room.code = applyOperations(oldText, clientOps);
+      updateRoomActivity(roomId);
+
+      const versionId = crypto.randomUUID();
+
+      // Ensure the room exists in DB before creating code change
+      await prisma.room.upsert({
+        where: { roomId },
+        update: {},
+        create: {
+          roomId,
+          title: `Room ${roomId}`,
+          createdById: parseInt(userId),
         },
       });
-    } catch (error) {
-      throw new Error("Error saving room session:", error);
-    }
-    // Broadcast to all other users in the room
-    socket.to(roomId).emit("code-update", {
-      code: room.code,
-      userId,
-      operations: clientOps,
-    });
 
-    // Clear pending operations after successful broadcast
-    room.pendingOps = [];
+      // Get the room's integer ID for the foreign key relationship
+      const roomRecord = await prisma.room.findUnique({
+        where: { roomId: roomId },
+        select: { id: true },
+      });
+
+      if (!roomRecord) {
+        throw new Error(`Room with roomId ${roomId} not found`);
+      }
+
+      // Store the operation in the database
+      await prisma.codeChange.create({
+        data: {
+          roomId: roomRecord.id,
+          userId: parseInt(userId),
+          versionId,
+          parentId: room.lastVersionId || undefined,
+          operations: clientOps,
+        },
+      });
+
+      room.lastVersionId = versionId;
+
+      // Save room session
+      try {
+        await prisma.roomSession.create({
+          data: {
+            room: {
+              connect: { roomId },
+            },
+            user: {
+              connect: { id: parseInt(userId) },
+            },
+            code: room.code,
+            language: room.language,
+          },
+        });
+      } catch (error) {
+        throw new Error("Failed to save room session");
+      }
+
+      // Broadcast to all other users in the room
+      socket.to(roomId).emit("code-update", {
+        code: room.code,
+        userId,
+        operations: clientOps,
+      });
+    } catch (error) {
+      socket.emit("error", { message: "Failed to process code change" });
+    }
   });
 
   // Handle language changes
