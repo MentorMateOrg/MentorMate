@@ -4,6 +4,7 @@ import Editor from "@monaco-editor/react";
 import VersionSidebar from "../components/VersionSidebar";
 
 import { jwtDecode } from "jwt-decode";
+import { SOCKET_URL } from "../config";
 
 import { applyOperations } from "../utils/operationUtils";
 import {
@@ -13,8 +14,6 @@ import {
   createCursorDecoration,
   addUserCursorStyles,
 } from "../utils/editorDecorations";
-
-const SOCKET_URL = "http://localhost:5000";
 const DEFAULT_LANGUAGE = "javascript";
 const EDITOR_THEME = "vs-dark";
 const DEBOUNCE_DELAY = 300;
