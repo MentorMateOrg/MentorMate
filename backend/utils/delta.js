@@ -1,58 +1,103 @@
-import { OP_RETAIN, OP_INSERT, OP_DELETE } from '../constants/operationTypes.js';
-import { createRetainOp, createInsertOp, createDeleteOp, normalizeOps } from './operationUtils.js';
+import {
+  createRetainOp,
+  createInsertOp,
+  createDeleteOp,
+  normalizeOps,
+} from "./operationUtils.js";
 
+/**
+ * Generate operations to transform oldText into newText
+ * Uses a simple but correct diff algorithm
+ */
 export default function generateDeltas(oldText, newText) {
-  // Use the Myers diff algorithm to find the minimal edit script
-  const operations = [];
-  let i = 0;
-  let j = 0;
+  // Handle null/undefined inputs
+  if (!oldText) oldText = "";
+  if (!newText) newText = "";
 
-  // Simple diff implementation (can be improved with Myers diff algorithm)
-  while (i < oldText.length || j < newText.length) {
-    // Find common prefix
+  const operations = [];
+  let oldPos = 0;
+  let newPos = 0;
+
+  while (oldPos < oldText.length || newPos < newText.length) {
+    // Find common prefix from current positions
     let commonStart = 0;
-    while (i + commonStart < oldText.length &&
-           j + commonStart < newText.length &&
-           oldText[i + commonStart] === newText[j + commonStart]) {
+    while (
+      oldPos + commonStart < oldText.length &&
+      newPos + commonStart < newText.length &&
+      oldText[oldPos + commonStart] === newText[newPos + commonStart]
+    ) {
       commonStart++;
     }
 
+    // Retain common characters
     if (commonStart > 0) {
       operations.push(createRetainOp(commonStart));
-      i += commonStart;
-      j += commonStart;
+      oldPos += commonStart;
+      newPos += commonStart;
+      continue;
     }
 
-    // Find common suffix
-    let commonEnd = 0;
-    while (i + commonEnd < oldText.length &&
-           j + commonEnd < newText.length &&
-           oldText[oldText.length - 1 - commonEnd] === newText[newText.length - 1 - commonEnd]) {
-      commonEnd++;
+    // Find the next common point using a simple approach
+    let oldEnd = oldPos;
+    let newEnd = newPos;
+
+    // Look for the next matching character
+    let found = false;
+    for (
+      let lookahead = 1;
+      lookahead <= Math.max(oldText.length - oldPos, newText.length - newPos) &&
+      !found;
+      lookahead++
+    ) {
+      // Try skipping characters in old text
+      if (oldPos + lookahead < oldText.length) {
+        for (let newSkip = 0; newSkip <= newText.length - newPos; newSkip++) {
+          if (
+            newPos + newSkip < newText.length &&
+            oldText[oldPos + lookahead] === newText[newPos + newSkip]
+          ) {
+            oldEnd = oldPos + lookahead;
+            newEnd = newPos + newSkip;
+            found = true;
+            break;
+          }
+        }
+      }
+
+      // Try skipping characters in new text
+      if (!found && newPos + lookahead < newText.length) {
+        for (let oldSkip = 0; oldSkip <= oldText.length - oldPos; oldSkip++) {
+          if (
+            oldPos + oldSkip < oldText.length &&
+            newText[newPos + lookahead] === oldText[oldPos + oldSkip]
+          ) {
+            oldEnd = oldPos + oldSkip;
+            newEnd = newPos + lookahead;
+            found = true;
+            break;
+          }
+        }
+      }
     }
 
-    // Handle middle section (different content)
-    const oldMiddleLength = oldText.length - i - commonEnd;
-    const newMiddleLength = newText.length - j - commonEnd;
-
-    if (oldMiddleLength > 0) {
-      operations.push(createDeleteOp(oldMiddleLength));
+    // If no common point found, consume the rest
+    if (!found) {
+      oldEnd = oldText.length;
+      newEnd = newText.length;
     }
 
-    if (newMiddleLength > 0) {
-      operations.push(createInsertOp(newText.substring(j, j + newMiddleLength)));
+    // Generate delete operation for old text
+    if (oldEnd > oldPos) {
+      operations.push(createDeleteOp(oldEnd - oldPos));
+      oldPos = oldEnd;
     }
 
-    i = oldText.length - commonEnd;
-    j = newText.length - commonEnd;
-
-    if (commonEnd > 0) {
-      operations.push(createRetainOp(commonEnd));
-      i += commonEnd;
-      j += commonEnd;
+    // Generate insert operation for new text
+    if (newEnd > newPos) {
+      operations.push(createInsertOp(newText.substring(newPos, newEnd)));
+      newPos = newEnd;
     }
   }
 
   return normalizeOps(operations);
 }
-
