@@ -76,7 +76,8 @@ const httpServer = createServer(app); // Create HTTP server
 const io = new Server(httpServer, {
   // Initialize Socket.io
   cors: {
-    origin: "https://mentormate-frontend.onrender.com",
+    origin:
+      process.env.FRONTEND_URL || "https://mentormate-frontend.onrender.com",
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -87,7 +88,8 @@ dotenv.config();
 
 app.use(
   cors({
-    origin: "https://mentormate-frontend.onrender.com",
+    origin:
+      process.env.FRONTEND_URL || "https://mentormate-frontend.onrender.com",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
