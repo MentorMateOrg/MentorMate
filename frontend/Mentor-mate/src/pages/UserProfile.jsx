@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import GithubActivity from "../components/GithubActivity";
+import { API_URL } from "../config";
 
 export default function UserProfile() {
   const { userId } = useParams();
@@ -23,14 +24,14 @@ export default function UserProfile() {
       let response;
       if (isOwnProfile) {
         // Fetch current user's profile
-        response = await fetch("http://localhost:5000/api/users/me", {
+        response = await fetch(`${API_URL}/api/users/me`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
       } else {
         // Fetch specific user's profile
-        response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+        response = await fetch(`${API_URL}/api/users/${userId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -64,7 +65,7 @@ export default function UserProfile() {
 
   const handleSaveBio = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/profile", {
+      const response = await fetch(`${API_URL}/api/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

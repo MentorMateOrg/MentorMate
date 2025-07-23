@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../config';
 
 function MenteeOnboarding({role, setRole}) {
     const [fullName, setFullName] = useState("");
@@ -24,7 +25,7 @@ function MenteeOnboarding({role, setRole}) {
           alert("token not found ");
           return;
         }
-        const response = await fetch("http://localhost:5000/api/profile/onboarding", {
+        const response = await fetch(`${API_URL}/api/profile/onboarding`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

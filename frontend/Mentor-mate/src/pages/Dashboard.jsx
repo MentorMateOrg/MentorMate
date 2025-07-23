@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import { useNavigate, Link } from "react-router-dom";
 import SearchBox from "../components/SearchBox";
 import LiveCodingEditor from "./LiveCodingEditor";
+import { API_URL } from "../config";
 
 const Dashboard = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -23,7 +24,7 @@ const Dashboard = () => {
   const fetchRecommendations = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/recommendations",
+        `${API_URL}/api/recommendations`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
