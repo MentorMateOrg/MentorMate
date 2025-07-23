@@ -1,7 +1,4 @@
-
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { applyOperations } from "../constants/operationTypes";
 
 export default function VersionSidebar({
   roomId,
@@ -20,7 +17,8 @@ export default function VersionSidebar({
 
     setLoading(true);
     setError(null);
-    //Request version history from server
+
+    // Request version history from server
     socket.emit("get-version-history", roomId);
 
     // Listen for version history response
@@ -44,14 +42,22 @@ export default function VersionSidebar({
       setSelectedVersionId(data.versionId);
     };
 
+    // Listen for new versions being saved
+    const handleVersionSaved = (data) => {
+      // Refresh version history when a new version is saved
+      socket.emit("get-version-history", roomId);
+    };
+
     socket.on("version-history", handleVersionHistory);
     socket.on("error", handleError);
     socket.on("version-applied", handleVersionApplied);
+    socket.on("version-saved", handleVersionSaved);
 
     return () => {
       socket.off("version-history", handleVersionHistory);
       socket.off("error", handleError);
       socket.off("version-applied", handleVersionApplied);
+      socket.off("version-saved", handleVersionSaved);
     };
   }, [roomId, socket]);
 
@@ -62,99 +68,73 @@ export default function VersionSidebar({
     socket.emit("apply-version", { roomId, versionId });
   };
 
-  const resolveConflict = (version1Id, version2Id) => {
-    if (!socket) return;
-
-    socket.emit("resolve-conflict", { roomId, version1Id, version2Id });
-  };
-
   return (
-    <div className="p-4 border-r w-72 overflow-y-auto">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="font-bold">Version History</h2>
+    <div className="w-72 border-l bg-gray-50 flex flex-col h-full">
+      <div className="flex justify-between items-center p-4 border-b bg-white">
+        <h2 className="font-bold text-lg">Version History</h2>
         {onClose && (
           <button
             onClick={onClose}
-             className="text-gray-500 hover:text-gray-700 text-xl p-1 hover:bg-gray-100 rounded"
+            className="text-gray-500 hover:text-gray-700 text-xl p-1 hover:bg-gray-100 rounded"
             aria-label="Close version sidebar"
           >
             ✕
           </button>
         )}
       </div>
+
       <div className="flex-1 overflow-y-auto p-4">
-      {versions.length === 0 && (
-        <div className="text-sm text-gray-500 text-center py-4">
-          No versions found
-        </div>
-      )}
-
-      {!loading && !error && versions.length === 0 && (
-        <div className="text-sm text-gray-500">No versions found</div>
-      )}
-
-      {!loading && !error && Array.isArray(versions) && versions.length > 0 && (
-        <div className="space-y-2">
-          {versions.map((v) => (
-            <div
-              key={v.versionId}
-              className={`cursor-pointer p-2 rounded ${
-                selectedVersionId === v.versionId
-                  ? "bg-blue-100 border border-blue-300"
-                  : "hover:bg-gray-100"
-              }`}
-              onClick={() => applyVersion(v.versionId)}
-            >
-              <div className="flex justify-between items-center">
-                <p className="text-sm font-medium">
-                  {v.user?.profile?.full_name || "Unknown User"}
-                </p>
-                {selectedVersionId && selectedVersionId !== v.versionId && (
-                  <button
-                    className="text-xs bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      resolveConflict(selectedVersionId, v.versionId);
-                    }}
-                  >
-                    Merge
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-gray-500">
-                {new Date(v.timestamp).toLocaleString()}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="space-y-2">
-        {Array.isArray(versions) &&
-          versions.length > 0 &&
-          versions.map((v) => (
-            <div
-              key={v.versionId}
-             className="cursor-pointer hover:bg-gray-100 active:bg-gray-200 p-3 rounded-md border border-transparent hover:border-gray-200 transition-all duration-150"
-              onClick={() => reconstructVersion(v.versionId)}
-            >
-              <p className="text-xs sm:text-sm font-medium text-gray-800 truncate">
-                {v.author}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {new Date(v.timestamp).toLocaleString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
-            </div>
-          ))}
+        {loading && (
+          <div className="text-sm text-gray-500 text-center py-4">
+            Loading versions...
           </div>
-      </div>
+        )}
 
+        {error && (
+          <div className="text-sm text-red-500 text-center py-4">
+            Error: {error}
+          </div>
+        )}
+
+        {!loading && !error && versions.length === 0 && (
+          <div className="text-sm text-gray-500 text-center py-4">
+            No versions saved yet
+          </div>
+        )}
+
+        {!loading &&
+          !error &&
+          Array.isArray(versions) &&
+          versions.length > 0 && (
+            <div className="space-y-2">
+              {versions.map((version) => (
+                <div
+                  key={version.versionId}
+                  className={`cursor-pointer p-3 rounded-md border transition-all duration-150 ${
+                    selectedVersionId === version.versionId
+                      ? "bg-blue-100 border-blue-300"
+                      : "bg-white hover:bg-gray-100 border-gray-200"
+                  }`}
+                  onClick={() => applyVersion(version.versionId)}
+                >
+                  <p className="text-sm font-medium text-gray-800 truncate">
+                    {version.user?.profile?.full_name ||
+                      version.author ||
+                      "Unknown User"}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(version.timestamp).toLocaleString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+      </div>
     </div>
   );
 }
-
-

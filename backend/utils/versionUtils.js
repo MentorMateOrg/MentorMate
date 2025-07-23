@@ -24,7 +24,7 @@ export async function getOperationChain(fromVersionId, toVersionId, roomId) {
   if (!fromVersionId) {
     // Get the target version
     const targetVersion = await prisma.codeChange.findFirst({
-      where: { versionId: toVersionId, roomId: roomId },
+      where: { versionId: toVersionId, roomId: room.id },
     });
 
     if (!targetVersion) {
@@ -39,7 +39,7 @@ export async function getOperationChain(fromVersionId, toVersionId, roomId) {
 
   // Get all versions in the room
   const allVersions = await prisma.codeChange.findMany({
-    where: { roomId: roomId },
+    where: { roomId: room.id },
     orderBy: { timestamp: "asc" },
   });
 
@@ -98,9 +98,12 @@ export async function getVersionHistory(roomId) {
     throw new Error(`Room with ID ${roomId} not found`);
   }
 
-  // Then find all code changes for that room
+  // Then find all saved versions for that room using the integer room ID
   return prisma.codeChange.findMany({
-    where: { roomId: roomId }, // Use the string roomId directly
+    where: {
+      roomId: room.id, // Use the integer room ID for the foreign key
+      isSavedVersion: true, // Only return explicitly saved versions
+    },
     orderBy: { timestamp: "desc" },
     include: { user: { include: { profile: true } } },
   });
@@ -125,7 +128,7 @@ export async function findCommonAncestor(versionId1, versionId2, roomId) {
 
   // Get all versions in the room
   const allVersions = await prisma.codeChange.findMany({
-    where: { roomId: roomId },
+    where: { roomId: room.id },
     orderBy: { timestamp: "asc" },
   });
 

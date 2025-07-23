@@ -33,9 +33,18 @@ const reconstructVersion = async (roomId, versionId) => {
   }
 
   try {
-    // Get all versions for this room
+    // First, find the room by roomId string
+    const room = await prisma.room.findUnique({
+      where: { roomId },
+    });
+
+    if (!room) {
+      throw new Error(`Room with ID ${roomId} not found`);
+    }
+
+    // Get all versions for this room using the integer room ID
     const versions = await prisma.codeChange.findMany({
-      where: { roomId: roomId },
+      where: { roomId: room.id },
       orderBy: { timestamp: "asc" },
     });
 
@@ -392,6 +401,7 @@ io.on("connection", (socket) => {
           versionId,
           parentId: room.lastVersionId || undefined,
           operations: operations,
+          isSavedVersion: true, // Mark this as a saved version
         },
       });
 
@@ -444,7 +454,7 @@ io.on("connection", (socket) => {
 
       // Get the version to apply
       const version = await prisma.codeChange.findFirst({
-        where: { roomId: roomId, versionId },
+        where: { roomId: roomData.id, versionId },
       });
 
       if (!version) {
@@ -455,21 +465,16 @@ io.on("connection", (socket) => {
       const room = activeRooms.get(roomId);
       if (!room) return;
 
-      // Get all operations between current version and target version
-      const operationChain = await getOperationChain(
-        room.lastVersionId,
-        versionId,
-        roomId
-      );
+      // Reconstruct the code by applying all operations up to this version
+      const reconstructedCode = await reconstructVersion(roomId, versionId);
 
-      // Apply the operations to the current code
-      const newCode = applyOperations(room.code, operationChain.operations);
-      room.code = newCode;
+      // Update room state
+      room.code = reconstructedCode;
       room.lastVersionId = versionId;
 
-      // Broadcast the new code to all users in the room
+      // Broadcast the reconstructed code to all users in the room
       io.to(roomId).emit("code-update", {
-        code: newCode,
+        code: reconstructedCode,
         userId: userRoom.userId,
         versionId,
       });

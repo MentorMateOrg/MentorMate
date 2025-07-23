@@ -49,6 +49,7 @@ export default function LiveCodingEditor() {
   const debounceRef = useRef(null);
   const prevCodeRef = useRef(code);
   const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("success");
 
   const [decorations, setDecorations] = useState([]);
   const [cursorDecorations, setCursorDecorations] = useState([]);
@@ -57,49 +58,34 @@ export default function LiveCodingEditor() {
   const [monacoInstance, setMonacoInstance] = useState(null);
   const cursorDebounceRef = useRef(null);
 
-    const handleEditorDidMount = (editor, monaco) => {
-      setEditorInstance(editor);
-      setMonacoInstance(monaco);
-
-      // Add cursor position tracking
-      editor.onDidChangeCursorPosition((e) => {
-        if (!socket || !isConnected) return;
-
-        if (cursorDebounceRef.current) {
-          clearTimeout(cursorDebounceRef.current);
-        }
-
-  const [versions, setVersions] = useState([]);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastType, setToastType] = useState("success");
-
-  const showToast = (message) => {
+  const showToast = (message, type = "success") => {
     setToastMessage(message);
+    setToastType(type);
     setTimeout(() => setToastMessage(""), 4000);
   };
 
-  const fetchVersions = async () => {
-    try {
-      const res = await fetch(`/api/rooms/room/${roomId}/history`);
-      if (res.ok) {
-        const data = await res.json();
-        setVersions(data);
+  const handleEditorDidMount = (editor, monaco) => {
+    setEditorInstance(editor);
+    setMonacoInstance(monaco);
+
+    // Add cursor position tracking
+    editor.onDidChangeCursorPosition((e) => {
+      if (!socket || !isConnected) return;
+
+      if (cursorDebounceRef.current) {
+        clearTimeout(cursorDebounceRef.current);
       }
-    } catch (error) {
-      alert("Error fetching versions:", error);
-    }
+
+      cursorDebounceRef.current = setTimeout(() => {
+        const model = editor.getModel();
+        if (!model) return;
+
+        const position = model.getOffsetAt(e.position);
+        socket.emit("cursor-position", { position, roomId, userId });
+      }, 100);
+    });
   };
-
-        cursorDebounceRef.current = setTimeout(() => {
-          const model = editor.getModel();
-          if (!model) return;
-
-          const position = model.getOffsetAt(e.position);
-          socket.emit("cursor-position", { position, roomId, userId });
-        }, 100);
-      });
-    };
-useEffect(() => {
+  useEffect(() => {
     if (!codingEditor) return;
 
     const newSocket = io(SOCKET_URL, {
@@ -228,9 +214,6 @@ useEffect(() => {
     });
 
     newSocket.on("version-saved", (data) => {
-      alert("Version saved event received:", data);
-      // Automatically refresh versions when someone saves a new version
-      fetchVersions();
       showToast(`${data.userName} saved a version`);
     });
 
@@ -292,7 +275,6 @@ useEffect(() => {
       socket.emit("save-version", { code, userId });
       prevCodeRef.current = code;
       setShowVersionSidebar(true); // Open the sidebar
-
     }
   };
 
@@ -423,20 +405,24 @@ useEffect(() => {
                     baseCode={code}
                     setEditorCode={setCode}
                     onClose={() => setShowVersionSidebar(false)}
-
                     socket={socket}
                   />
                 )}
             </div>
-            <div className="p-4 border-t">
-            <button onClick={handleSaveVersion}>
-              Save Version
-            </button>
+            <div className="p-4 border-t flex gap-2">
               <button
-                onClick={ () => setShowVersionSidebar(!showVersionSidebar)}
-                className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
+                onClick={handleSaveVersion}
+                className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+                disabled={!isConnected || connectedUsers.length === 0}
               >
-               {showVersionSidebar ? "Hide History" : "Show History"}
+                Save Version
+              </button>
+              <button
+                onClick={() => setShowVersionSidebar(!showVersionSidebar)}
+                className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm"
+                disabled={!isConnected || connectedUsers.length === 0}
+              >
+                {showVersionSidebar ? "Hide History" : "Show History"}
               </button>
             </div>
           </div>

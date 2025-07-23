@@ -83,13 +83,14 @@ model RoomSession {
 }
 
 model CodeChange {
-  id         Int      @id @default(autoincrement())
-  room       Room     @relation(fields: [roomId], references: [id])
-  roomId     Int
-  user       User     @relation(fields: [userId], references: [id])
-  userId     Int
-  timestamp  DateTime @default(now())
-  versionId  String
-  parentId   String?
-  operations Json
+  id            Int      @id @default(autoincrement())
+  room          Room     @relation(fields: [roomId], references: [id])
+  roomId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+  timestamp     DateTime @default(now())
+  versionId     String
+  parentId      String?
+  operations    Json
+  isSavedVersion Boolean @default(false)
 }
