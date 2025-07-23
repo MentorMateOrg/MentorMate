@@ -1,4 +1,8 @@
-import { OP_RETAIN, OP_INSERT, OP_DELETE } from '../constants/operationTypes.js';
+import {
+  OP_RETAIN,
+  OP_INSERT,
+  OP_DELETE,
+} from "../constants/operationTypes.js";
 
 // Create operations
 export function createRetainOp(count) {
@@ -22,7 +26,7 @@ export function normalizeOps(ops) {
 
   for (const op of ops) {
     if (!lastOp) {
-      lastOp = {...op};
+      lastOp = { ...op };
       result.push(lastOp);
       continue;
     }
@@ -34,7 +38,7 @@ export function normalizeOps(ops) {
         lastOp.chars += op.chars;
       }
     } else {
-      lastOp = {...op};
+      lastOp = { ...op };
       result.push(lastOp);
     }
   }
@@ -54,14 +58,14 @@ export function composeOps(op1, op2) {
   while (index1 < op1.length || index2 < op2.length) {
     // Case 1: op1 is exhausted
     if (index1 >= op1.length) {
-      result.push({...op2[index2]});
+      result.push({ ...op2[index2] });
       index2++;
       continue;
     }
 
     // Case 2: op2 is exhausted
     if (index2 >= op2.length) {
-      result.push({...op1[index1]});
+      result.push({ ...op1[index1] });
       index1++;
       continue;
     }
@@ -71,14 +75,14 @@ export function composeOps(op1, op2) {
 
     // Case 3: op1 is insert
     if (a.type === OP_INSERT) {
-      result.push({...a});
+      result.push({ ...a });
       index1++;
       continue;
     }
 
     // Case 4: op1 is delete
     if (a.type === OP_DELETE) {
-      result.push({...a});
+      result.push({ ...a });
       index1++;
       continue;
     }
@@ -87,7 +91,7 @@ export function composeOps(op1, op2) {
     if (a.type === OP_RETAIN) {
       // Case 5.1: op2 is insert
       if (b.type === OP_INSERT) {
-        result.push({...b});
+        result.push({ ...b });
         index2++;
         continue;
       }
@@ -140,7 +144,9 @@ export function invertOps(ops, text) {
     } else if (op.type === OP_INSERT) {
       result.push(createDeleteOp(op.chars.length));
     } else if (op.type === OP_DELETE) {
-      result.push(createInsertOp(text.substring(textIndex, textIndex + op.count)));
+      result.push(
+        createInsertOp(text.substring(textIndex, textIndex + op.count))
+      );
       textIndex += op.count;
     }
   }
