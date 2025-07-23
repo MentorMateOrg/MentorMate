@@ -9,6 +9,7 @@ import RoleSelect from "./pages/RoleSelect.";
 import SearchResults from "./pages/SearchResults";
 import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
+import { API_URL } from "./config";
 
 const steps = {
   SIGNUP: 1,
@@ -49,7 +50,7 @@ export default function PagesContainer() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/me", {
+      const response = await fetch(`${API_URL}/api/users/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
