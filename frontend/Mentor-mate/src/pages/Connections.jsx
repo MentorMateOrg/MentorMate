@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import { API_URL } from "../config";
 
 
+
 export default function Connections({ targetUser }) {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [connections, setConnections] = useState([]);
@@ -31,6 +32,7 @@ export default function Connections({ targetUser }) {
     }
 
     try {
+
       const response = await fetch(`${API_URL}/api/connection/request`, {
         method: "POST",
         headers: {
@@ -39,6 +41,7 @@ export default function Connections({ targetUser }) {
         },
         body: JSON.stringify({ receiverId: targetUser.id }),
       });
+
       if (response.ok) {
         alert("Connection request sent!");
       } else {
@@ -53,7 +56,9 @@ export default function Connections({ targetUser }) {
   const acceptRequest = async (requestId) => {
     try {
       const response = await fetch(
+
         `${API_URL}/api/connection/requests/${requestId}/accept`,
+
         {
           method: "PUT",
           headers: {
@@ -80,6 +85,7 @@ export default function Connections({ targetUser }) {
     try {
       const response = await fetch(
         `${API_URL}/api/connection/requests/${requestId}/reject`,
+
         {
           method: "PUT",
           headers: {
@@ -105,6 +111,7 @@ export default function Connections({ targetUser }) {
     try {
       const response = await fetch(
         `${API_URL}/api/connection/requests/pending`,
+
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -120,11 +127,13 @@ export default function Connections({ targetUser }) {
 
   const fetchConnections = async () => {
     try {
+
       const response = await fetch(`${API_URL}/api/connection/connections`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
+
       const data = await response.json();
       setConnections(data);
     } catch (err) {

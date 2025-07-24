@@ -14,6 +14,7 @@ export default function UserProfile() {
   const [profilePicUrl, setProfilePicUrl] = useState("");
   const [experiences, setExperiences] = useState([]);
   const [interests, setInterests] = useState([]);
+  const [connectionStatus, setConnectionStatus] = useState(null); // null, 'pending', 'connected', 'none'
 
   // Check if this is the user's own profile (no userId param means own profile)
   const isOwnProfile = !userId;
@@ -61,7 +62,81 @@ export default function UserProfile() {
 
   useEffect(() => {
     fetchUser();
+    if (!isOwnProfile) {
+      checkConnectionStatus();
+    }
   }, [userId, isOwnProfile]);
+
+  const checkConnectionStatus = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/connections/requests",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const requests = await response.json();
+        const currentUserId = JSON.parse(
+          atob(localStorage.getItem("token").split(".")[1])
+        ).id;
+
+        // Check if there's already a connection request between users
+        const existingRequest = requests.find(
+          (request) =>
+            (request.senderId === currentUserId &&
+              request.receiverId === parseInt(userId)) ||
+            (request.receiverId === currentUserId &&
+              request.senderId === parseInt(userId))
+        );
+
+        if (existingRequest) {
+          if (existingRequest.status === "ACCEPTED") {
+            setConnectionStatus("connected");
+          } else if (existingRequest.status === "PENDING") {
+            setConnectionStatus("pending");
+          } else {
+            setConnectionStatus("none");
+          }
+        } else {
+          setConnectionStatus("none");
+        }
+      }
+    } catch (error) {
+      setConnectionStatus("none");
+    }
+  };
+
+  const handleConnect = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/connections/request",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            receiverId: parseInt(userId),
+          }),
+        }
+      );
+
+      if (response.ok) {
+        setConnectionStatus("pending");
+        alert("Connection request sent successfully!");
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to send connection request: ${errorData.message}`);
+      }
+    } catch (error) {
+      alert("Error sending connection request");
+    }
+  };
 
   const handleSaveBio = async () => {
     try {
@@ -104,11 +179,19 @@ export default function UserProfile() {
       <Navbar />
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row items-center bg-white rounded-lg shadow-md p-6 mb-8">
-          <img
-            src={user.profile.profilePicUrl}
-            alt="Profile"
-            className="w-32 h-32 rounded-full object-cover border-2 border-purple-500"
-          ></img>
+          {user.profile.profilePicUrl ? (
+            <img
+              src={user.profile.profilePicUrl}
+              alt="Profile"
+              className="w-32 h-32 rounded-full object-cover border-2 border-purple-500"
+            />
+          ) : (
+            <div className="w-32 h-32 rounded-full bg-gray-300 border-2 border-purple-500 flex items-center justify-center">
+              <span className="text-gray-600 text-2xl font-semibold">
+                {user.profile.full_name?.charAt(0)?.toUpperCase() || "?"}
+              </span>
+            </div>
+          )}
           <div className="ml-0 md:ml-6 text-center md:text-left mt-4 md:mt-0">
             <h2 className="text-2xl font-semibold">{user.profile.full_name}</h2>
             <p className="text-gray-500">
@@ -158,8 +241,36 @@ export default function UserProfile() {
           ))}
         </div>
 
-        {/* Github Activity */}
-        <GithubActivity githubUrl={user.profile.githubUrl} />
+        {/* Github Activity - only show for mentees */}
+        {user.profile.role === "mentee" && (
+          <GithubActivity githubUrl={user.profile.githubUrl} />
+        )}
+
+        {/* Connect Button - only show when viewing someone else's profile */}
+        {!isOwnProfile && (
+          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+            <button
+              onClick={handleConnect}
+              disabled={
+                connectionStatus === "pending" ||
+                connectionStatus === "connected"
+              }
+              className={`px-6 py-3 rounded-md w-full md:w-auto ${
+                connectionStatus === "connected"
+                  ? "bg-green-500 text-white cursor-not-allowed"
+                  : connectionStatus === "pending"
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : "bg-purple-500 text-white hover:bg-purple-600"
+              }`}
+            >
+              {connectionStatus === "connected"
+                ? "Connected"
+                : connectionStatus === "pending"
+                ? "Request Sent"
+                : "Connect"}
+            </button>
+          </div>
+        )}
 
         {/* Modal to edit bio - only show for own profile */}
         {isEditingBio && isOwnProfile && (

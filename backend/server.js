@@ -101,7 +101,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/connection", connectionRoutes);
+app.use("/api/connections", connectionRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/github", githubRoutes);

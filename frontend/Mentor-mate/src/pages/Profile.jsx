@@ -76,11 +76,19 @@ export default function Profile({ user, setUser }) {
         <div className="max-w-7xl mx-auto">
           {/* Profile Header */}
           <div className="flex flex-col md:flex-row items-center bg-white rounded-lg shadow-md p-6 mb-8">
-            <img
-              src={user.profile.profilePicUrl}
-              alt="Profile"
-              className="w-32 h-32 rounded-full object-cover border-2 border-purple-500"
-            />
+            {user.profile.profilePicUrl ? (
+              <img
+                src={user.profile.profilePicUrl}
+                alt="Profile"
+                className="w-32 h-32 rounded-full object-cover border-2 border-purple-500"
+              />
+            ) : (
+              <div className="w-32 h-32 rounded-full bg-gray-300 border-2 border-purple-500 flex items-center justify-center">
+                <span className="text-gray-600 text-2xl font-semibold">
+                  {user.profile.full_name?.charAt(0)?.toUpperCase() || "?"}
+                </span>
+              </div>
+            )}
             <div className="ml-0 md:ml-6 text-center md:text-left mt-4 md:mt-0">
               <h2 className="text-2xl font-semibold">
                 {user.profile.full_name}
@@ -130,7 +138,10 @@ export default function Profile({ user, setUser }) {
           {/* Connections */}
           <Connections />
 
-          <GithubActivity githubUrl={user.profile.githubUrl} />
+          {/* Github Activity - only show for mentees */}
+          {user.profile.role === "mentee" && (
+            <GithubActivity githubUrl={user.profile.githubUrl} />
+          )}
 
           {/* Modal to edit bio */}
           {isEditingBio && (
