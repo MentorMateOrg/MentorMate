@@ -4,9 +4,9 @@ import { useNavigate, Link } from "react-router-dom";
 import SearchBox from "../components/SearchBox";
 import LiveCodingEditor from "./LiveCodingEditor";
 import { API_URL } from "../config";
-
 import { LoadingSpinnerWithText } from "../components/LoadingSpinner";
 import { CardHoverEffect } from "../components/CursorEffects";
+import TodoList from "../components/TodoList";
 
 
 const Dashboard = () => {
@@ -102,16 +102,7 @@ const Dashboard = () => {
             </CardHoverEffect>
 
             {/* Todos */}
-            <CardHoverEffect className="flex-1 bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-purple-600 mb-4">
-                Your Todos
-              </h2>
-              <ul className="list-disc list-inside text-gray-700 space-y-1">
-                <li>Set up 1:1 with mentor</li>
-                <li>Set up 1:1 with mentee</li>
-                <li>Complete onboarding tasks</li>
-              </ul>
-            </CardHoverEffect>
+            <TodoList />
           </div>
 
           <div className="flex flex-col md:flex-row gap-6">
