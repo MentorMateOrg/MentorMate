@@ -31,21 +31,17 @@ router.post("/activity", authToken, async (req, res) => {
 });
 
 function extractUsernameFromUrl(githubUrl) {
-  try {
-    const url = new URL(githubUrl);
-    if (url.hostname !== "github.com") {
-      return { username: null, error: "Not a GitHub URL" };
-    }
-
-    const pathParts = url.pathname.split("/").filter(Boolean);
-    if (pathParts.length === 0) {
-      return { username: null, error: "Username not found in URL" };
-    }
-
-    return { username: pathParts[0], error: null };
-  } catch (err) {
-    return { username: null, error: "Invalid URL" };
+  const url = new URL(githubUrl);
+  if (url.hostname !== "github.com") {
+    throw new Error("Not a GitHub URL");
   }
+
+  const pathParts = url.pathname.split("/").filter(Boolean);
+  if (pathParts.length === 0) {
+    throw new Error("Username not found in URL");
+  }
+
+  return pathParts[0];
 }
 
 async function fetchGithubData(username) {
@@ -90,7 +86,7 @@ async function fetchGithubData(username) {
 
     // Fetch organizations user belongs to
     const orgsResponse = await fetch(
-      `https://api.github.com/user/${username}/orgs`,
+      `https://api.github.com/users/${username}/orgs`,
       {
         headers: {
           Authorization: `token ${githubToken}`,
@@ -176,9 +172,11 @@ function getTopProject(repos) {
     if (b.forks_count !== a.forks_count) {
       return b.forks_count - a.forks_count;
     }
+
     if (sortedRepos.length === 0) {
       return null;
     }
+
     return a.name.localeCompare(b.name);
   });
   return sortedRepos[0].name;
@@ -377,7 +375,8 @@ function generateRealBadges(userData, reposData) {
   // Account age badge
   const accountCreated = new Date(userData.created_at);
 
-  totalDaysInYear = 365;
+  const msInDay = 1000 * 60 * 60 * 24;
+  const totalDaysInYear = 365;
 
   const yearsActive = Math.floor(
     (new Date() - accountCreated) / (msInDay * totalDaysInYear)
