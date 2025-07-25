@@ -8,6 +8,7 @@ import { LoadingSpinnerWithText } from "../components/LoadingSpinner";
 import { CardHoverEffect } from "../components/CursorEffects";
 import TodoList from "../components/TodoList";
 import ProgressTracker from "../components/ProgressTracker";
+import CommunityArticles from "../components/CommunityArticles";
 
 const Dashboard = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -105,13 +106,7 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row gap-6">
             {/* Community Engagements */}
             <CardHoverEffect className="flex-1 bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-purple-600 mb-4">
-                Community Engagements
-              </h2>
-              <p className="text-gray-600">
-                Join upcoming events, workshops, or peer study sessions. Stay
-                active!
-              </p>
+              <CommunityArticles />
             </CardHoverEffect>
 
             {/* Progress */}
