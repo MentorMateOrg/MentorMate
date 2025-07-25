@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import GitHubCalendar from "react-github-calendar";
+
 import { API_URL } from "../config";
+
+import { LoadingSpinnerWithText } from "./LoadingSpinner";
+
 
 export default function GithubActivity({ githubUrl }) {
   const [activity, setActivity] = useState(null);
@@ -80,7 +84,12 @@ export default function GithubActivity({ githubUrl }) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md mt-4">
         {GithubActivityHeader}
-        <p>Loading Github data...</p>
+        <div className="py-8">
+          <LoadingSpinnerWithText
+            text="Loading GitHub activity..."
+            size="medium"
+          />
+        </div>
       </div>
     );
   }

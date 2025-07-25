@@ -1,109 +1,104 @@
-import { OP_RETAIN, OP_INSERT, OP_DELETE } from '../constants/operationTypes.js';
-import { normalizeOps, createRetainOp, createInsertOp, createDeleteOp } from './operationUtils.js';
+import {
+  OP_RETAIN,
+  OP_INSERT,
+  OP_DELETE,
+} from "../constants/operationTypes.js";
+import {
+  normalizeOps,
+  createRetainOp,
+  createInsertOp,
+  createDeleteOp,
+} from "./operationUtils.js";
 
 /**
  * Transform operation A against operation B
- * Returns A' such that: B + A' = A + B
+ * Returns A' such that: apply(apply(doc, B), A') = apply(apply(doc, A), B')
+ * This implements the standard OT transformation with proper tie-breaking
  */
-export function transformOp(opA, opB) {
+export function transformOp(opA, opB, priority = "left") {
   const result = [];
   let indexA = 0;
   let indexB = 0;
 
-  while (indexA < opA.length || indexB < opB.length) {
-    // Both operations exhausted
-    if (indexA >= opA.length && indexB >= opB.length) {
-      break;
+  // Create mutable copies to avoid modifying original operations
+  const opsA = opA.map((op) => ({ ...op }));
+  const opsB = opB.map((op) => ({ ...op }));
+
+  while (indexA < opsA.length || indexB < opsB.length) {
+    const a = indexA < opsA.length ? opsA[indexA] : null;
+    const b = indexB < opsB.length ? opsB[indexB] : null;
+
+    // Case 1: Both are inserts at the same position - need tie-breaking
+    if (a && a.type === OP_INSERT && b && b.type === OP_INSERT) {
+      // Use consistent tie-breaking: left operation (A) goes first
+      if (priority === "left") {
+        result.push(createInsertOp(a.chars));
+        indexA++;
+      } else {
+        // Right operation (B) goes first, so A needs to be shifted
+        result.push(createRetainOp(b.chars.length));
+        indexB++;
+      }
+      continue;
     }
 
-    const a = indexA < opA.length ? opA[indexA] : null;
-    const b = indexB < opB.length ? opB[indexB] : null;
-
-    // Case 1: A is insert - insert is always prioritized
+    // Case 2: A is insert (and B is not insert)
     if (a && a.type === OP_INSERT) {
-      result.push({...a});
+      result.push(createInsertOp(a.chars));
       indexA++;
       continue;
     }
 
-    // Case 2: B is insert - skip over B's insert
+    // Case 3: B is insert (and A is not insert) - we need to retain over B's insertion
     if (b && b.type === OP_INSERT) {
       result.push(createRetainOp(b.chars.length));
       indexB++;
       continue;
     }
 
-    // At this point, neither op is an insert
-
-    // Handle case where one op is exhausted
+    // Handle exhausted operations
     if (!a) {
-      // Only B operations remain, which must be deletes
-      // These deletes have no effect on A'
-      break;
+      // Only B operations remain (must be retain/delete)
+      indexB++;
+      continue;
     }
 
     if (!b) {
-      // Only A operations remain, copy them to result
-      result.push({...a});
+      // Only A operations remain
+      result.push({ ...a });
       indexA++;
       continue;
     }
 
-    // Both ops are either retain or delete
+    // Both operations are retain or delete
+    const aLength = a.count;
+    const bLength = b.count;
+    const minLength = Math.min(aLength, bLength);
 
-    // Calculate the overlapping length
-    const minLength = Math.min(
-      a.type === OP_RETAIN || a.type === OP_DELETE ? a.count : a.chars.length,
-      b.type === OP_RETAIN || b.type === OP_DELETE ? b.count : b.chars.length
-    );
-
-    // Case 3: both retain - keep the retain
+    // Case 3: A retain, B retain
     if (a.type === OP_RETAIN && b.type === OP_RETAIN) {
       result.push(createRetainOp(minLength));
-
-      // Consume from both operations
-      if (a.count === minLength) indexA++;
-      else a.count -= minLength;
-
-      if (b.count === minLength) indexB++;
-      else b.count -= minLength;
     }
-
-    // Case 4: A is delete, B is retain - keep the delete
+    // Case 4: A delete, B retain
     else if (a.type === OP_DELETE && b.type === OP_RETAIN) {
       result.push(createDeleteOp(minLength));
-
-      // Consume from both operations
-      if (a.count === minLength) indexA++;
-      else a.count -= minLength;
-
-      if (b.count === minLength) indexB++;
-      else b.count -= minLength;
     }
-
-    // Case 5: A is retain, B is delete - B's delete cancels A's retain
+    // Case 5: A retain, B delete (B's delete cancels A's retain)
     else if (a.type === OP_RETAIN && b.type === OP_DELETE) {
-      // Don't add anything to result - the text A was retaining is deleted by B
-
-      // Consume from both operations
-      if (a.count === minLength) indexA++;
-      else a.count -= minLength;
-
-      if (b.count === minLength) indexB++;
-      else b.count -= minLength;
+      // Don't add anything - the text A wanted to retain is deleted by B
     }
-
-    // Case 6: both delete - only count one delete
+    // Case 6: A delete, B delete (both delete same text)
     else if (a.type === OP_DELETE && b.type === OP_DELETE) {
-      // Don't add anything to result - both trying to delete the same text
-
-      // Consume from both operations
-      if (a.count === minLength) indexA++;
-      else a.count -= minLength;
-
-      if (b.count === minLength) indexB++;
-      else b.count -= minLength;
+      // Don't add anything - text is already deleted by B
     }
+
+    // Consume the processed length from both operations
+    a.count -= minLength;
+    b.count -= minLength;
+
+    // Move to next operation if current one is exhausted
+    if (a.count === 0) indexA++;
+    if (b.count === 0) indexB++;
   }
 
   return normalizeOps(result);

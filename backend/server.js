@@ -255,94 +255,80 @@ io.on("connection", (socket) => {
     const room = activeRooms.get(roomId);
     if (!room) return;
 
-    const oldText = room.code;
-    const newText = data.code;
-
-    // Generate operations from client's changes
-    const clientOps = generateDeltas(oldText, newText);
-
-    // If there are concurrent operations that haven't been applied yet
-    if (room.pendingOps && room.pendingOps.length > 0) {
-      // Transform client operations against all pending operations
-      let transformedClientOps = clientOps;
-      for (const pendingOp of room.pendingOps) {
-        transformedClientOps = transformOp(transformedClientOps, pendingOp);
-      }
-
-      // Apply transformed operations to the current room state
-      room.code = applyOperations(room.code, transformedClientOps);
-
-      // Add transformed client operations to pending operations
-      room.pendingOps.push(transformedClientOps);
-    } else {
-      // No concurrent operations, just apply directly
-      room.code = newText;
-      room.pendingOps = [clientOps];
-    }
-
-    updateRoomActivity(roomId);
-
-    const versionId = crypto.randomUUID();
-
-    // Ensure the room exists in DB before creating code change
-    await prisma.room.upsert({
-      where: { roomId },
-      update: {},
-      create: {
-        roomId,
-        title: `Room ${roomId}`,
-        createdById: parseInt(userId),
-      },
-    });
-
-    // Store the operation in the database
-    // Get the room's integer ID for the foreign key relationship
-    const roomRecord = await prisma.room.findUnique({
-      where: { roomId: roomId },
-      select: { id: true },
-    });
-
-    if (!roomRecord) {
-      throw new Error(`Room with roomId ${roomId} not found`);
-    }
-
-    await prisma.codeChange.create({
-      data: {
-        roomId: roomRecord.id, // Use the integer ID for the foreign key
-        userId: parseInt(userId),
-        versionId,
-        parentId: room.lastVersionId || undefined,
-        operations: clientOps,
-      },
-    });
-
-    room.lastVersionId = versionId;
-
     try {
-      await prisma.roomSession.create({
-        data: {
-          room: {
-            connect: { roomId },
-          },
-          user: {
-            connect: { id: parseInt(userId) },
-          },
-          code: room.code,
-          language: room.language,
+      const oldText = room.code;
+      const newText = data.code;
+
+      // Generate operations from client's changes
+      const clientOps = generateDeltas(oldText, newText);
+
+      // Apply operations directly to room state
+      room.code = applyOperations(oldText, clientOps);
+      updateRoomActivity(roomId);
+
+      const versionId = crypto.randomUUID();
+
+      // Ensure the room exists in DB before creating code change
+      await prisma.room.upsert({
+        where: { roomId },
+        update: {},
+        create: {
+          roomId,
+          title: `Room ${roomId}`,
+          createdById: parseInt(userId),
         },
       });
-    } catch (error) {
-      throw new Error("Error saving room session:", error);
-    }
-    // Broadcast to all other users in the room
-    socket.to(roomId).emit("code-update", {
-      code: room.code,
-      userId,
-      operations: clientOps,
-    });
 
-    // Clear pending operations after successful broadcast
-    room.pendingOps = [];
+      // Get the room's integer ID for the foreign key relationship
+      const roomRecord = await prisma.room.findUnique({
+        where: { roomId: roomId },
+        select: { id: true },
+      });
+
+      if (!roomRecord) {
+        throw new Error(`Room with roomId ${roomId} not found`);
+      }
+
+      // Store the operation in the database
+      await prisma.codeChange.create({
+        data: {
+          roomId: roomRecord.id,
+          userId: parseInt(userId),
+          versionId,
+          parentId: room.lastVersionId || undefined,
+          operations: clientOps,
+        },
+      });
+
+      room.lastVersionId = versionId;
+
+      // Save room session
+      try {
+        await prisma.roomSession.create({
+          data: {
+            room: {
+              connect: { roomId },
+            },
+            user: {
+              connect: { id: parseInt(userId) },
+            },
+            code: room.code,
+            language: room.language,
+          },
+        });
+      } catch (error) {
+        throw new Error("Failed to save room session");
+      }
+
+      // Broadcast to all other users in the room
+      socket.to(roomId).emit("code-update", {
+        code: room.code,
+        userId,
+        operations: clientOps,
+      });
+    } catch (error) {
+      socket.emit("error", { message: "Failed to process code change" });
+    }
   });
 
   // Handle language changes
@@ -439,6 +425,55 @@ io.on("connection", (socket) => {
     } catch (error) {
       socket.emit("error", {
         message: "Failed to fetch version history",
+        error: error.message,
+      });
+    }
+  });
+
+  // Get version changes for preview
+  socket.on("get-version-changes", async (data) => {
+    const { roomId, versionId } = data;
+
+    try {
+      // Get the room's numeric id using the roomId string
+      const roomData = await prisma.room.findUnique({
+        where: { roomId },
+        select: { id: true },
+      });
+
+      if (!roomData) {
+        throw new Error(`Room with roomId ${roomId} not found`);
+      }
+
+      // Get the version to preview
+      const version = await prisma.codeChange.findFirst({
+        where: { roomId: roomData.id, versionId },
+        include: { user: { include: { profile: true } } },
+      });
+
+      if (!version) {
+        socket.emit("error", { message: "Version not found" });
+        return;
+      }
+
+      // Get the current room state
+      const room = activeRooms.get(roomId);
+      const currentCode = room ? room.code : DEFAULT_CODE_TEMPLATE;
+
+      // Reconstruct the code that would result from applying this version
+      const versionCode = await reconstructVersion(roomId, versionId);
+
+      socket.emit("version-changes", {
+        versionId,
+        operations: version.operations,
+        currentCode,
+        versionCode,
+        author: version.user?.profile?.full_name || "Unknown User",
+        timestamp: version.timestamp,
+      });
+    } catch (error) {
+      socket.emit("error", {
+        message: "Failed to get version changes",
         error: error.message,
       });
     }

@@ -5,9 +5,15 @@ import SearchBox from "../components/SearchBox";
 import LiveCodingEditor from "./LiveCodingEditor";
 import { API_URL } from "../config";
 
+import { LoadingSpinnerWithText } from "../components/LoadingSpinner";
+import { CardHoverEffect } from "../components/CursorEffects";
+
+
 const Dashboard = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] =
+    useState(true);
 
   const navigate = useNavigate();
 
@@ -22,6 +28,7 @@ const Dashboard = () => {
   const onClose = () => setShowLogoutModal(false);
 
   const fetchRecommendations = async () => {
+    setIsLoadingRecommendations(true);
     try {
       const response = await fetch(
         `${API_URL}/api/recommendations`,
@@ -34,7 +41,8 @@ const Dashboard = () => {
       const data = await response.json();
       setRecommendations(data);
     } catch (err) {
-      alert(err);
+    } finally {
+      setIsLoadingRecommendations(false);
     }
   };
 
@@ -58,15 +66,25 @@ const Dashboard = () => {
 
           <div className="flex flex-col md:flex-row gap-6 mb-6">
             {/* Recommendations */}
-            <div className="flex-1 bg-white rounded-lg shadow-md p-6 h-80 overflow-auto">
+            <CardHoverEffect className="flex-1 bg-white rounded-lg shadow-md p-6 h-80 overflow-auto">
               <h2 className="text-xl font-semibold text-purple-600 mb-4">
                 Recommended Matches
               </h2>
-              {recommendations.length > 0 ? (
+              {isLoadingRecommendations ? (
+                <div className="flex items-center justify-center h-40">
+                  <LoadingSpinnerWithText
+                    text="Finding your matches..."
+                    size="medium"
+                  />
+                </div>
+              ) : recommendations.length > 0 ? (
                 <ul className="space-y-2 text-gray-700">
                   {recommendations.map((profile) => (
                     <li key={profile.id} className="border-b pb-2">
-                      <Link to={`/profile/${profile.userId}`}>
+                      <Link
+                        to={`/profile/${profile.userId}`}
+                        className="text-purple-600 hover:text-purple-800"
+                      >
                         {profile.full_name}
                       </Link>
                       <p className="text-sm text-gray-500">
@@ -81,10 +99,10 @@ const Dashboard = () => {
               ) : (
                 <p className="text-gray-400">No recommendations yet.</p>
               )}
-            </div>
+            </CardHoverEffect>
 
             {/* Todos */}
-            <div className="flex-1 bg-white rounded-lg shadow-md p-6">
+            <CardHoverEffect className="flex-1 bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-purple-600 mb-4">
                 Your Todos
               </h2>
@@ -93,12 +111,12 @@ const Dashboard = () => {
                 <li>Set up 1:1 with mentee</li>
                 <li>Complete onboarding tasks</li>
               </ul>
-            </div>
+            </CardHoverEffect>
           </div>
 
           <div className="flex flex-col md:flex-row gap-6">
             {/* Community Engagements */}
-            <div className="flex-1 bg-white rounded-lg shadow-md p-6">
+            <CardHoverEffect className="flex-1 bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-purple-600 mb-4">
                 Community Engagements
               </h2>
@@ -106,17 +124,17 @@ const Dashboard = () => {
                 Join upcoming events, workshops, or peer study sessions. Stay
                 active!
               </p>
-            </div>
+            </CardHoverEffect>
 
             {/* Progress */}
-            <div className="flex-1 bg-white rounded-lg shadow-md p-6">
+            <CardHoverEffect className="flex-1 bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-purple-600 mb-4">
                 My Progress
               </h2>
               <p className="text-gray-600">
                 Track your mentorship journey and achievements here.
               </p>
-            </div>
+            </CardHoverEffect>
 
             {/* Live Coding */}
             <LiveCodingEditor />

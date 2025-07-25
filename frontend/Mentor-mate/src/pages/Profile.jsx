@@ -3,6 +3,9 @@ import Connections from "./Connections";
 import Navbar from "../components/Navbar";
 import GithubActivity from "../components/GithubActivity";
 import { API_URL } from "../config";
+import { LoadingSpinnerWithText } from "../components/LoadingSpinner";
+import { CardHoverEffect } from "../components/CursorEffects";
+
 
 export default function Profile({ user, setUser }) {
   const [isEditingBio, setIsEditingBio] = useState(false);
@@ -15,6 +18,7 @@ export default function Profile({ user, setUser }) {
     user?.profile?.experiences || []
   );
   const [interests, setInterests] = useState(user?.profile?.interests || []);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (user && user.profile) {
@@ -27,10 +31,15 @@ export default function Profile({ user, setUser }) {
   }, [user]);
 
   if (!user || !user.profile) {
-    return <div className="text-center mt-10 text-gray-600">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <LoadingSpinnerWithText text="Loading your profile..." size="large" />
+      </div>
+    );
   }
 
   const handleSaveBio = async () => {
+    setIsLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/profile`, {
         method: "PUT",
@@ -55,6 +64,8 @@ export default function Profile({ user, setUser }) {
       }
     } catch (err) {
       alert(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -123,8 +134,8 @@ export default function Profile({ user, setUser }) {
 
           {/* Modal to edit bio */}
           {isEditingBio && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50  p-6 rounded-lg shadow-md mb-8">
-              <div className="bg-white shadow-lg w-full max-w-md p-6 relative">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="bg-white shadow-lg w-full max-w-md p-6 relative rounded-lg">
                 <h3 className="text-lg font-semibold mb-4">Edit Bio</h3>
                 <h3>Name</h3>
                 <textarea
@@ -168,13 +179,15 @@ export default function Profile({ user, setUser }) {
                 ></textarea>
                 <button
                   onClick={handleSaveBio}
-                  className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600"
+                  className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 disabled:opacity-50"
+                  disabled={isLoading}
                 >
-                  Save
+                  {isLoading ? "Saving..." : "Save"}
                 </button>
                 <button
                   onClick={() => setIsEditingBio(false)}
                   className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 ml-4"
+                  disabled={isLoading}
                 >
                   Cancel
                 </button>
