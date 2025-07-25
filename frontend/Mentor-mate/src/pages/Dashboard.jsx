@@ -3,8 +3,11 @@ import Navbar from "../components/Navbar";
 import { useNavigate, Link } from "react-router-dom";
 import SearchBox from "../components/SearchBox";
 import LiveCodingEditor from "./LiveCodingEditor";
+import { API_URL } from "../config";
+
 import { LoadingSpinnerWithText } from "../components/LoadingSpinner";
 import { CardHoverEffect } from "../components/CursorEffects";
+
 
 const Dashboard = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -28,7 +31,7 @@ const Dashboard = () => {
     setIsLoadingRecommendations(true);
     try {
       const response = await fetch(
-        "http://localhost:5000/api/recommendations",
+        `${API_URL}/api/recommendations`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

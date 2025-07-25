@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 
 function SearchBox() {
   const [query, setQuery] = useState("");
@@ -9,7 +10,7 @@ function SearchBox() {
   const handleSearch = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/search?query=${query}`,
+        `${API_URL}/api/search?query=${query}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

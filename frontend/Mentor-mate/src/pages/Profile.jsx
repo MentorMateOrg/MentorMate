@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import Connections from "./Connections";
 import Navbar from "../components/Navbar";
 import GithubActivity from "../components/GithubActivity";
+import { API_URL } from "../config";
 import { LoadingSpinnerWithText } from "../components/LoadingSpinner";
 import { CardHoverEffect } from "../components/CursorEffects";
+
 
 export default function Profile({ user, setUser }) {
   const [isEditingBio, setIsEditingBio] = useState(false);
@@ -39,7 +41,7 @@ export default function Profile({ user, setUser }) {
   const handleSaveBio = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/profile", {
+      const response = await fetch(`${API_URL}/api/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

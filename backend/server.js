@@ -76,7 +76,8 @@ const httpServer = createServer(app); // Create HTTP server
 const io = new Server(httpServer, {
   // Initialize Socket.io
   cors: {
-    origin: "http://localhost:5173",
+    origin:
+      process.env.FRONTEND_URL || "https://mentormate-frontend.onrender.com",
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -85,7 +86,15 @@ const io = new Server(httpServer, {
 const prisma = new PrismaClient();
 dotenv.config();
 
-app.use(cors());
+app.use(
+  cors({
+    origin:
+      process.env.FRONTEND_URL || "https://mentormate-frontend.onrender.com",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
 // Routes

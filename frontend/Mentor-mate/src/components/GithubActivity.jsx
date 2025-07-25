@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import GitHubCalendar from "react-github-calendar";
+
+import { API_URL } from "../config";
+
 import { LoadingSpinnerWithText } from "./LoadingSpinner";
+
 
 export default function GithubActivity({ githubUrl }) {
   const [activity, setActivity] = useState(null);
@@ -25,7 +29,7 @@ export default function GithubActivity({ githubUrl }) {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/github/activity`,
+        `${API_URL}/api/github/activity`,
         {
           method: "POST",
           headers: {

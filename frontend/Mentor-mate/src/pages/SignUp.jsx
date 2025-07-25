@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Onboarding from "./Onboarding";
 import Navbar from "../components/Navbar";
+import { API_URL } from "../config";
 
 function SignUp({ stepper }) {
   const [email, setEmail] = useState("");
@@ -12,7 +13,7 @@ function SignUp({ stepper }) {
   const handleSignUp = async (form) => {
     form.preventDefault();
     try {
-      const response = await fetch("http://localhost:5000/api/auth/signup", {
+      const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email, plainPassword: password }),
