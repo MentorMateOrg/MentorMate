@@ -20,7 +20,6 @@ router.post("/activity", authToken, async (req, res) => {
 
     const githubData = await fetchGithubData(username);
 
-
     if (githubData.error) {
       return res.status(500).json({ message: githubData.error });
     }
@@ -177,8 +176,8 @@ function getTopProject(repos) {
     if (b.forks_count !== a.forks_count) {
       return b.forks_count - a.forks_count;
     }
-    if(sortedRepos.length === 0){
-        return null
+    if (sortedRepos.length === 0) {
+      return null;
     }
     return a.name.localeCompare(b.name);
   });

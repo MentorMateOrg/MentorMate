@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 
 import { jwtDecode } from "jwt-decode";
 
-
 export default function Connections({ targetUser }) {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [connections, setConnections] = useState([]);
@@ -217,9 +216,7 @@ export default function Connections({ targetUser }) {
                         Reject
                       </button>
                     </div>
-
                   </div>
-
                 ))}
               </div>
             )}
@@ -267,7 +264,6 @@ export default function Connections({ targetUser }) {
               </div>
             )}
           </div>
-
         </div>
       )}
     </>
