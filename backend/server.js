@@ -421,6 +421,55 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Get version changes for preview
+  socket.on("get-version-changes", async (data) => {
+    const { roomId, versionId } = data;
+
+    try {
+      // Get the room's numeric id using the roomId string
+      const roomData = await prisma.room.findUnique({
+        where: { roomId },
+        select: { id: true },
+      });
+
+      if (!roomData) {
+        throw new Error(`Room with roomId ${roomId} not found`);
+      }
+
+      // Get the version to preview
+      const version = await prisma.codeChange.findFirst({
+        where: { roomId: roomData.id, versionId },
+        include: { user: { include: { profile: true } } },
+      });
+
+      if (!version) {
+        socket.emit("error", { message: "Version not found" });
+        return;
+      }
+
+      // Get the current room state
+      const room = activeRooms.get(roomId);
+      const currentCode = room ? room.code : DEFAULT_CODE_TEMPLATE;
+
+      // Reconstruct the code that would result from applying this version
+      const versionCode = await reconstructVersion(roomId, versionId);
+
+      socket.emit("version-changes", {
+        versionId,
+        operations: version.operations,
+        currentCode,
+        versionCode,
+        author: version.user?.profile?.full_name || "Unknown User",
+        timestamp: version.timestamp,
+      });
+    } catch (error) {
+      socket.emit("error", {
+        message: "Failed to get version changes",
+        error: error.message,
+      });
+    }
+  });
+
   // Apply a specific version
   socket.on("apply-version", async (data) => {
     const { roomId, versionId } = data;
