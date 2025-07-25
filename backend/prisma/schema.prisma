@@ -34,6 +34,9 @@ model User {
   milestones         Milestone[]
   userBadges         UserBadge[]
   mentorshipPlans    MentorshipPlan[]    @relation("MentorshipPlanUser")
+  articles           Article[]           @relation("UserArticles")
+  articleLikes       ArticleLike[]       @relation("UserArticleLikes")
+  comments           Comment[]           @relation("UserComments")
 }
 
 model Profile {
@@ -178,4 +181,39 @@ model MentorshipPlan {
   user        User      @relation("MentorshipPlanUser", fields: [userId], references: [id])
   userId      Int
   template    Json? // Store plan template structure
+}
+
+model Article {
+  id          Int           @id @default(autoincrement())
+  title       String
+  content     String
+  published   Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  author      User          @relation("UserArticles", fields: [authorId], references: [id])
+  authorId    Int
+  likes       ArticleLike[]
+  comments    Comment[]
+}
+
+model ArticleLike {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  user      User     @relation("UserArticleLikes", fields: [userId], references: [id])
+  userId    Int
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId Int
+
+  @@unique([userId, articleId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation("UserComments", fields: [authorId], references: [id])
+  authorId  Int
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId Int
 }
