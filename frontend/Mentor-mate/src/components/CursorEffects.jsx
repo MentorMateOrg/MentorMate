@@ -5,26 +5,28 @@ export function InteractiveCursor() {
   const [isClicking, setIsClicking] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
+  // Define event handlers outside of useEffect to avoid recreating them on every render
+  const updatePosition = (e) => {
+    setPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseDown = () => setIsClicking(true);
+  const handleMouseUp = () => setIsClicking(false);
+
+  const handleMouseEnter = (e) => {
+    if (e.target.matches('button, a, .cursor-hover, [role="button"]')) {
+      setIsHovering(true);
+    }
+  };
+
+  const handleMouseLeave = (e) => {
+    if (e.target.matches('button, a, .cursor-hover, [role="button"]')) {
+      setIsHovering(false);
+    }
+  };
+
   useEffect(() => {
-    const updatePosition = (e) => {
-      setPosition({ x: e.clientX, y: e.clientY });
-    };
-
-    const handleMouseDown = () => setIsClicking(true);
-    const handleMouseUp = () => setIsClicking(false);
-
-    const handleMouseEnter = (e) => {
-      if (e.target.matches('button, a, .cursor-hover, [role="button"]')) {
-        setIsHovering(true);
-      }
-    };
-
-    const handleMouseLeave = (e) => {
-      if (e.target.matches('button, a, .cursor-hover, [role="button"]')) {
-        setIsHovering(false);
-      }
-    };
-
+    // Only add and remove event listeners in useEffect
     document.addEventListener("mousemove", updatePosition);
     document.addEventListener("mousedown", handleMouseDown);
     document.addEventListener("mouseup", handleMouseUp);
@@ -40,6 +42,12 @@ export function InteractiveCursor() {
     };
   }, []);
 
+  // Calculate safe positions to prevent negative values at screen edges
+  const safeLeftPosition = Math.max(0, position.x - 10);
+  const safeTopPosition = Math.max(0, position.y - 10);
+  const safeCenterLeftPosition = Math.max(0, position.x - 2);
+  const safeCenterTopPosition = Math.max(0, position.y - 2);
+
   return (
     <>
       <div
@@ -47,8 +55,8 @@ export function InteractiveCursor() {
           isClicking ? "scale-75" : isHovering ? "scale-150" : "scale-100"
         }`}
         style={{
-          left: position.x - 10,
-          top: position.y - 10,
+          left: safeLeftPosition,
+          top: safeTopPosition,
           width: "20px",
           height: "20px",
           borderRadius: "50%",
@@ -61,8 +69,8 @@ export function InteractiveCursor() {
       <div
         className="fixed pointer-events-none z-40 transition-all duration-300 ease-out"
         style={{
-          left: position.x - 2,
-          top: position.y - 2,
+          left: safeCenterLeftPosition,
+          top: safeCenterTopPosition,
           width: "4px",
           height: "4px",
           borderRadius: "50%",
