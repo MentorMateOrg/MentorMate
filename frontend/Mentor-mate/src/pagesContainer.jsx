@@ -9,6 +9,8 @@ import RoleSelect from "./pages/RoleSelect.";
 import SearchResults from "./pages/SearchResults";
 import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
+import { InteractiveCursor } from "./components/CursorEffects";
+import { FullPageLoader } from "./components/LoadingSpinner";
 
 const steps = {
   SIGNUP: 1,
@@ -40,11 +42,13 @@ function stepper({ step }) {
 export default function PagesContainer() {
   const [role, setRole] = useState("");
   const [user, setUser] = useState("");
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const fetchUser = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       setUser("");
+      setIsInitialLoading(false);
       return;
     }
 
@@ -58,14 +62,17 @@ export default function PagesContainer() {
       if (response.ok) {
         setUser(data);
       } else {
-        // If token is invalid, clear it
         localStorage.removeItem("token");
         setUser("");
       }
     } catch (err) {
+
       alert("Error fetching user data", err);
+
       localStorage.removeItem("token");
       setUser("");
+    } finally {
+      setIsInitialLoading(false);
     }
   };
 
@@ -92,8 +99,13 @@ export default function PagesContainer() {
     };
   }, []);
 
+  if (isInitialLoading) {
+    return <FullPageLoader text="Loading MentorMate..." />;
+  }
+
   return (
     <>
+      <InteractiveCursor />
       <Router>
         <Routes>
           <Route path="/" element={<Welcome />} />
