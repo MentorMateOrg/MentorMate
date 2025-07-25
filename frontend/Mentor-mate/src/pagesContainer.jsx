@@ -63,7 +63,7 @@ export default function PagesContainer() {
         setUser("");
       }
     } catch (err) {
-      alert("Error fetching user data", err)
+      alert("Error fetching user data", err);
       localStorage.removeItem("token");
       setUser("");
     }
