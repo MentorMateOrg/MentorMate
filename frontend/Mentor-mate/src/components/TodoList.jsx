@@ -24,10 +24,10 @@ const TodoList = () => {
         const data = await response.json();
         setTodos(data);
       } else {
-        console.error("Failed to fetch todos");
+        alert("Failed to fetch todos. Please try again.");
       }
     } catch (error) {
-      console.error("Error fetching todos:", error);
+      alert("Error fetching todos. Please check your connection.");
     } finally {
       setLoading(false);
     }
@@ -55,10 +55,10 @@ const TodoList = () => {
         setNewTodo("");
         setShowAddForm(false);
       } else {
-        console.error("Failed to add todo");
+        alert("Failed to add todo. Please try again.");
       }
     } catch (error) {
-      console.error("Error adding todo:", error);
+      alert("Error adding todo. Please check your connection.");
     }
   };
 
@@ -79,10 +79,10 @@ const TodoList = () => {
         const updatedTodo = await response.json();
         setTodos(todos.map((todo) => (todo.id === id ? updatedTodo : todo)));
       } else {
-        console.error("Failed to update todo");
+        alert("Failed to update todo. Please try again.");
       }
     } catch (error) {
-      console.error("Error updating todo:", error);
+      alert("Error updating todo. Please check your connection.");
     }
   };
 
@@ -98,10 +98,10 @@ const TodoList = () => {
       if (response.ok) {
         setTodos(todos.filter((todo) => todo.id !== id));
       } else {
-        console.error("Failed to delete todo");
+        alert("Failed to delete todo. Please try again.");
       }
     } catch (error) {
-      console.error("Error deleting todo:", error);
+      alert("Error deleting todo. Please check your connection.");
     }
   };
 

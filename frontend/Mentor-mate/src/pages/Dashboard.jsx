@@ -7,7 +7,7 @@ import { API_URL } from "../config";
 import { LoadingSpinnerWithText } from "../components/LoadingSpinner";
 import { CardHoverEffect } from "../components/CursorEffects";
 import TodoList from "../components/TodoList";
-
+import ProgressTracker from "../components/ProgressTracker";
 
 const Dashboard = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -30,14 +30,11 @@ const Dashboard = () => {
   const fetchRecommendations = async () => {
     setIsLoadingRecommendations(true);
     try {
-      const response = await fetch(
-        `${API_URL}/api/recommendations`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_URL}/api/recommendations`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       const data = await response.json();
       setRecommendations(data);
     } catch (err) {
@@ -118,13 +115,9 @@ const Dashboard = () => {
             </CardHoverEffect>
 
             {/* Progress */}
+
             <CardHoverEffect className="flex-1 bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-purple-600 mb-4">
-                My Progress
-              </h2>
-              <p className="text-gray-600">
-                Track your mentorship journey and achievements here.
-              </p>
+              <ProgressTracker />
             </CardHoverEffect>
 
             {/* Live Coding */}

@@ -30,6 +30,10 @@ model User {
   roomSessions       RoomSession[]       @relation("UserRoomSessions")
   codeChanges        CodeChange[]
   todos              Todo[]
+  goals              Goal[]
+  milestones         Milestone[]
+  userBadges         UserBadge[]
+  mentorshipPlans    MentorshipPlan[]    @relation("MentorshipPlanUser")
 }
 
 model Profile {
@@ -105,4 +109,73 @@ model Todo {
   updatedAt   DateTime @updatedAt
   user        User     @relation(fields: [userId], references: [id])
   userId      Int
+}
+
+model Goal {
+  id          Int         @id @default(autoincrement())
+  title       String
+  description String?
+  targetDate  DateTime?
+  completed   Boolean     @default(false)
+  progress    Int         @default(0) // Progress percentage (0-100)
+  category    String // e.g., "technical", "communication", "leadership"
+  priority    String      @default("medium") // "low", "medium", "high"
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id])
+  userId      Int
+  milestones  Milestone[]
+}
+
+model Milestone {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  completed   Boolean   @default(false)
+  dueDate     DateTime?
+  completedAt DateTime?
+  order       Int       @default(0) // Order within the goal
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  goal        Goal?     @relation(fields: [goalId], references: [id])
+  goalId      Int?
+}
+
+model Badge {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  description String
+  icon        String // Icon name or emoji
+  category    String // e.g., "achievement", "progress", "community"
+  criteria    String // Description of how to earn this badge
+  createdAt   DateTime    @default(now())
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id       Int      @id @default(autoincrement())
+  earnedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   Int
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+  badgeId  Int
+
+  @@unique([userId, badgeId])
+}
+
+model MentorshipPlan {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  duration    Int // Duration in weeks
+  phase       String    @default("planning") // "planning", "active", "completed"
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation("MentorshipPlanUser", fields: [userId], references: [id])
+  userId      Int
+  template    Json? // Store plan template structure
 }

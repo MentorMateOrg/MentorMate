@@ -18,6 +18,7 @@ import recommendationRoutes from "./routes/recommendation.routes.js";
 import searchRoutes from "./routes/search.routes.js";
 import roomRoutes from "./routes/room.routes.js";
 import todoRoutes from "./routes/todo.routes.js";
+import progressRoutes from "./routes/progress.routes.js";
 import generateDeltas from "./utils/delta.js";
 import { transformOp } from "./utils/transform.js";
 import { applyOperations } from "./utils/applyOps.js";
@@ -108,6 +109,7 @@ app.use("/api/search", searchRoutes);
 app.use("/api/github", githubRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/todos", todoRoutes);
+app.use("/api/progress", progressRoutes);
 
 // Basic Express route
 app.get("/", (req, res) => {
