@@ -6,6 +6,7 @@ import LiveCodingEditor from "./LiveCodingEditor";
 import { API_URL } from "../config";
 import { LoadingSpinnerWithText } from "../components/LoadingSpinner";
 import { CardHoverEffect } from "../components/CursorEffects";
+
 import TodoList from "../components/TodoList";
 import ProgressTracker from "../components/ProgressTracker";
 import CommunityArticles from "../components/CommunityArticles";
@@ -117,6 +118,9 @@ const Dashboard = () => {
 
             {/* Live Coding */}
             <LiveCodingEditor />
+            <CardHoverEffect className="flex-1 bg-white rounded-lg shadow-md p-6">
+              <ProgressTracker />
+            </CardHoverEffect>
           </div>
         </div>
       </div>

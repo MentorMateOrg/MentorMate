@@ -33,9 +33,12 @@ const SUPPORTED_LANGUAGES = [
   { value: "sql", label: "SQL" },
 ];
 
-export default function LiveCodingEditor() {
+export default function LiveCodingEditor({
+  isOpen = false,
+  onClose = () => {},
+}) {
   const [socket, setSocket] = useState(null);
-  const [codingEditor, setCodingEditor] = useState(false);
+  const [codingEditor, setCodingEditor] = useState(isOpen);
   const [code, setCode] = useState(
     "// Welcome to collaborative coding!\n// Start typing to see real-time updates"
   );
@@ -84,6 +87,11 @@ export default function LiveCodingEditor() {
       }, 100);
     });
   };
+  // Update codingEditor state when isOpen prop changes
+  useEffect(() => {
+    setCodingEditor(isOpen);
+  }, [isOpen]);
+
   useEffect(() => {
     if (!codingEditor) return;
 
@@ -287,12 +295,6 @@ export default function LiveCodingEditor() {
           {toastMessage}
         </div>
       )}
-      <button
-        onClick={() => setCodingEditor(true)}
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-      >
-        Open Code Editor
-      </button>
       {codingEditor && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg w-11/12 h-5/6 flex flex-col">
@@ -310,7 +312,10 @@ export default function LiveCodingEditor() {
               <div className="flex items-center gap-4">
                 <span className="text-sm">Users: {connectedUsers.length}</span>
                 <button
-                  onClick={() => setCodingEditor(false)}
+                  onClick={() => {
+                    setCodingEditor(false);
+                    onClose();
+                  }}
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
                 >
                   Close

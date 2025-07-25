@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import LiveCodingEditor from "../pages/LiveCodingEditor";
 
 const navigation = {
   DASHBBOARD: "Dashboard",
@@ -9,6 +11,7 @@ const navigation = {
 
 function Navbar() {
   const navigate = useNavigate();
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
 
   const handleLogOut = () => {
     localStorage.removeItem("token");
@@ -19,29 +22,42 @@ function Navbar() {
 
   return (
     <>
-      <nav className="px-2 sm:px-4 py-2.5 text-white bg-purple-500 flex justify-between">
+      <nav className="px-2 sm:px-4 py-2.5 text-white bg-purple-500 flex justify-between shadow-lg">
         <h2 className="flex items-end text-2xl font-bold">MentorMate</h2>
-        <div className="flex items-center justify-end text-white">
+        <div className="flex items-center justify-end text-white gap-3">
           <Link
             to={"/profile"}
-            className="hover:text-gray-700 bg-purple-500 py-2 px-4 rounded-xl mr-4 "
+            className="bg-white/10 text-white py-2 px-4 rounded-lg hover:bg-white/20 transition-all duration-200 font-medium border border-white/20 hover:border-white/30"
           >
             {navigation.PROFILE}
           </Link>
           <Link
             to={"/dashboard"}
-            className="hover:text-gray-700 bg-purple-500 py-2 px-4 rounded-xl"
+            className="bg-white/10 text-white py-2 px-4 rounded-lg hover:bg-white/20 transition-all duration-200 font-medium border border-white/20 hover:border-white/30"
           >
             {navigation.DASHBBOARD}
           </Link>
           <button
-            className="ml-4 text-black bg-gray-100 py-2 px-4 rounded-xl"
+            onClick={() => setShowCodeEditor(true)}
+            className="bg-white/10 text-white py-2 px-4 rounded-lg hover:bg-white/20 transition-all duration-200 font-medium border border-white/20 hover:border-white/30"
+          >
+            Code Editor
+          </button>
+          <button
+            className="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-all duration-200 font-medium border border-red-600 hover:border-red-700 shadow-md"
             onClick={handleLogOut}
           >
             Log Out
           </button>
         </div>
       </nav>
+
+      {showCodeEditor && (
+        <LiveCodingEditor
+          isOpen={showCodeEditor}
+          onClose={() => setShowCodeEditor(false)}
+        />
+      )}
     </>
   );
 }
