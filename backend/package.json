@@ -17,6 +17,11 @@
     "web": "^0.0.2"
   },
   "devDependencies": {
-    "prisma": "^6.10.1"
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
+    "babel-jest": "^30.0.5",
+    "jest": "^30.0.5",
+    "prisma": "^6.10.1",
+    "socket.io-client": "^4.8.1"
   }
 }
