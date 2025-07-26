@@ -79,11 +79,18 @@ const reconstructVersion = async (roomId, versionId) => {
 
 const app = express();
 const httpServer = createServer(app); // Create HTTP server
+
+// CORS origins for both development and production
+const allowedOrigins = [
+  "http://localhost:5173", // Vite development server
+  "http://localhost:3000", // React development server
+  process.env.FRONTEND_URL || "https://mentormate-frontend.onrender.com",
+];
+
 const io = new Server(httpServer, {
   // Initialize Socket.io
   cors: {
-    origin:
-      process.env.FRONTEND_URL || "https://mentormate-frontend.onrender.com",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -94,8 +101,7 @@ dotenv.config();
 
 app.use(
   cors({
-    origin:
-      process.env.FRONTEND_URL || "https://mentormate-frontend.onrender.com",
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
