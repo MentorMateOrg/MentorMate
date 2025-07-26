@@ -6,7 +6,6 @@ import { API_URL } from "../config";
 import { LoadingSpinnerWithText } from "../components/LoadingSpinner";
 import { CardHoverEffect } from "../components/CursorEffects";
 
-
 export default function Profile({ user, setUser }) {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bio, setBio] = useState(user?.profile?.bio || "");
@@ -18,6 +17,7 @@ export default function Profile({ user, setUser }) {
     user?.profile?.experiences || []
   );
   const [interests, setInterests] = useState(user?.profile?.interests || []);
+  const [githubUrl, setGithubUrl] = useState(user?.profile?.githubUrl || "");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -27,6 +27,7 @@ export default function Profile({ user, setUser }) {
       setProfilePicUrl(user.profile.profilePicUrl || "");
       setExperiences(user.profile.experiences || []);
       setInterests(user.profile.interests || []);
+      setGithubUrl(user.profile.githubUrl || "");
     }
   }, [user]);
 
@@ -53,6 +54,7 @@ export default function Profile({ user, setUser }) {
           profilePicUrl,
           interests,
           experiences,
+          githubUrl,
         }),
       });
       if (response.ok) {
@@ -138,8 +140,8 @@ export default function Profile({ user, setUser }) {
           {/* Connections */}
           <Connections />
 
-          {/* Github Activity - only show for mentees */}
-          {user.profile.role === "mentee" && (
+          {/* Github Activity - show for all users with GitHub URL */}
+          {user.profile.githubUrl && (
             <GithubActivity githubUrl={user.profile.githubUrl} />
           )}
 
@@ -179,6 +181,16 @@ export default function Profile({ user, setUser }) {
                   onChange={(e) => setProfilePicUrl(e.target.value)}
                   placeholder="Set your profile picture URL here..."
                 ></textarea>
+
+                <h3>GitHub URL</h3>
+                <input
+                  type="url"
+                  className="w-full border border-gray-300 rounded-md p-2 mb-4"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  placeholder="https://github.com/yourusername"
+                />
+
                 <h3>Experience</h3>
 
                 <textarea

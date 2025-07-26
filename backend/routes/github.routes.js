@@ -173,10 +173,6 @@ function getTopProject(repos) {
       return b.forks_count - a.forks_count;
     }
 
-    if (sortedRepos.length === 0) {
-      return null;
-    }
-
     return a.name.localeCompare(b.name);
   });
   return sortedRepos[0].name;
