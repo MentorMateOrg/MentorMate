@@ -152,6 +152,7 @@ export default function UserProfile() {
           profilePicUrl,
           interests,
           experiences,
+          githubUrl: user.profile.githubUrl,
         }),
       });
       if (response.ok) {
@@ -241,8 +242,8 @@ export default function UserProfile() {
           ))}
         </div>
 
-        {/* Github Activity - only show for mentees */}
-        {user.profile.role === "mentee" && (
+        {/* Github Activity - show for all users with GitHub URL */}
+        {user.profile.githubUrl && (
           <GithubActivity githubUrl={user.profile.githubUrl} />
         )}
 
@@ -314,6 +315,23 @@ export default function UserProfile() {
                 value={profilePicUrl}
                 onChange={(e) => setProfilePicUrl(e.target.value)}
                 placeholder="Enter profile picture URL"
+              />
+
+              <h4 className="font-medium mb-2">GitHub URL</h4>
+              <input
+                type="url"
+                className="w-full border border-gray-300 rounded-md p-2 mb-4"
+                value={user.profile.githubUrl || ""}
+                onChange={(e) => {
+                  setUser((prev) => ({
+                    ...prev,
+                    profile: {
+                      ...prev.profile,
+                      githubUrl: e.target.value,
+                    },
+                  }));
+                }}
+                placeholder="https://github.com/yourusername"
               />
 
               <h4 className="font-medium mb-2">Experience</h4>

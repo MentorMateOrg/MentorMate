@@ -68,13 +68,21 @@ router.get("/", authToken, async (req, res) => {
 });
 
 router.put("/", authToken, async (req, res) => {
-  const { full_name, bio, profilePicUrl, interests, experiences } = req.body;
+  const { full_name, bio, profilePicUrl, interests, experiences, githubUrl } =
+    req.body;
   try {
     const updated = await prisma.profile.update({
       where: { userId: req.user.id },
-      data: { full_name, bio, profilePicUrl, interests, experiences },
+      data: {
+        full_name,
+        bio,
+        profilePicUrl,
+        interests,
+        experiences,
+        githubUrl,
+      },
     });
-    res.status(200).json({ message: "Bio updated", profile: updated });
+    res.status(200).json({ message: "Profile updated", profile: updated });
   } catch (err) {
     res.status(500).json({ message: "Update failed", error: err.message });
   }

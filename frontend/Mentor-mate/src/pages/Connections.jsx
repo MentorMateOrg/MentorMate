@@ -5,8 +5,6 @@ import { jwtDecode } from "jwt-decode";
 
 import { API_URL } from "../config";
 
-
-
 export default function Connections({ targetUser }) {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [connections, setConnections] = useState([]);
@@ -32,8 +30,7 @@ export default function Connections({ targetUser }) {
     }
 
     try {
-
-      const response = await fetch(`${API_URL}/api/connection/request`, {
+      const response = await fetch(`${API_URL}/api/connections/request`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,8 +53,7 @@ export default function Connections({ targetUser }) {
   const acceptRequest = async (requestId) => {
     try {
       const response = await fetch(
-
-        `${API_URL}/api/connection/requests/${requestId}/accept`,
+        `${API_URL}/api/connections/requests/${requestId}/accept`,
 
         {
           method: "PUT",
@@ -84,7 +80,7 @@ export default function Connections({ targetUser }) {
   const rejectRequest = async (requestId) => {
     try {
       const response = await fetch(
-        `${API_URL}/api/connection/requests/${requestId}/reject`,
+        `${API_URL}/api/connections/requests/${requestId}/reject`,
 
         {
           method: "PUT",
@@ -110,7 +106,7 @@ export default function Connections({ targetUser }) {
   const fetchPendingRequests = async () => {
     try {
       const response = await fetch(
-        `${API_URL}/api/connection/requests/pending`,
+        `${API_URL}/api/connections/requests/pending`,
 
         {
           headers: {
@@ -127,8 +123,7 @@ export default function Connections({ targetUser }) {
 
   const fetchConnections = async () => {
     try {
-
-      const response = await fetch(`${API_URL}/api/connection/connections`, {
+      const response = await fetch(`${API_URL}/api/connections/connections`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
