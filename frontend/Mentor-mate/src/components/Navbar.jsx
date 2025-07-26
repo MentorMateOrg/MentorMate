@@ -7,6 +7,7 @@ const navigation = {
   DASHBBOARD: "Dashboard",
   PROFILE: "Profile",
   CONNECTION_REQUESTS: "Connection Requests",
+  GROUP_MENTORSHIP: "Group Mentorship",
 };
 
 function Navbar() {
@@ -36,6 +37,12 @@ function Navbar() {
             className="bg-white/10 text-white py-2 px-4 rounded-lg hover:bg-white/20 transition-all duration-200 font-medium border border-white/20 hover:border-white/30"
           >
             {navigation.DASHBBOARD}
+          </Link>
+          <Link
+            to={"/group-mentorship"}
+            className="bg-white/10 text-white py-2 px-4 rounded-lg hover:bg-white/20 transition-all duration-200 font-medium border border-white/20 hover:border-white/30"
+          >
+            {navigation.GROUP_MENTORSHIP}
           </Link>
           <button
             onClick={() => setShowCodeEditor(true)}
