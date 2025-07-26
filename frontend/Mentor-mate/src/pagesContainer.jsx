@@ -9,8 +9,8 @@ import RoleSelect from "./pages/RoleSelect.";
 import SearchResults from "./pages/SearchResults";
 import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
-import GroupPage from "./components/GroupPage";
 import Footer from "./components/Footer";
+import { API_URL } from "./config.js";
 
 const steps = {
   SIGNUP: 1,
@@ -51,7 +51,7 @@ export default function PagesContainer() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/me", {
+      const response = await fetch(`${API_URL}/api/users/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -133,7 +133,6 @@ export default function PagesContainer() {
               element={<Profile user={user} setUser={setUser} />}
             />
             <Route path="/profile/:userId" element={<UserProfile />} />
-            <Route path="/groups/:groupId" element={<GroupPage />} />
           </Routes>
         </div>
         <Footer />

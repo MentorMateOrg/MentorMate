@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_URL } from "../config.js";
 
 const TodoList = () => {
   const [todos, setTodos] = useState([]);
@@ -14,7 +15,7 @@ const TodoList = () => {
   const fetchTodos = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/todos", {
+      const response = await fetch(`${API_URL}/api/todos`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -38,7 +39,7 @@ const TodoList = () => {
     if (!newTodo.trim()) return;
 
     try {
-      const response = await fetch("http://localhost:5000/api/todos", {
+      const response = await fetch(`${API_URL}/api/todos`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -64,7 +65,7 @@ const TodoList = () => {
 
   const toggleTodo = async (id, completed) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/todos/${id}`, {
+      const response = await fetch(`${API_URL}/api/todos/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -88,7 +89,7 @@ const TodoList = () => {
 
   const deleteTodo = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/todos/${id}`, {
+      const response = await fetch(`${API_URL}/api/todos/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,

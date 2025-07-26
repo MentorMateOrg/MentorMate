@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_URL } from "../config.js";
 
 const CommunityArticles = () => {
   const [articles, setArticles] = useState([]);
@@ -18,7 +19,7 @@ const CommunityArticles = () => {
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/articles", {
+      const response = await fetch(`${API_URL}/api/articles`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -42,7 +43,7 @@ const CommunityArticles = () => {
     if (!newArticle.title.trim() || !newArticle.content.trim()) return;
 
     try {
-      const response = await fetch("http://localhost:5000/api/articles", {
+      const response = await fetch(`${API_URL}/api/articles`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -70,7 +71,7 @@ const CommunityArticles = () => {
   const toggleLike = async (articleId) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/articles/${articleId}/like`,
+        `${API_URL}/api/articles/${articleId}/like`,
         {
           method: "POST",
           headers: {
@@ -111,7 +112,7 @@ const CommunityArticles = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/articles/${articleId}/comments`,
+        `${API_URL}/api/articles/${articleId}/comments`,
         {
           method: "POST",
           headers: {
