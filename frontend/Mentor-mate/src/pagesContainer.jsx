@@ -9,6 +9,7 @@ import RoleSelect from "./pages/RoleSelect.";
 import SearchResults from "./pages/SearchResults";
 import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
+import GroupMentorship from "./components/GroupMentorship";
 import Footer from "./components/Footer";
 import { API_URL } from "./config.js";
 
@@ -133,6 +134,7 @@ export default function PagesContainer() {
               element={<Profile user={user} setUser={setUser} />}
             />
             <Route path="/profile/:userId" element={<UserProfile />} />
+            <Route path="/group-mentorship" element={<GroupMentorship />} />
           </Routes>
         </div>
         <Footer />
