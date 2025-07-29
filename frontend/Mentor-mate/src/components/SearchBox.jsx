@@ -30,12 +30,12 @@ function SearchBox() {
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search by name or skill"
-        className="border rounded px-4 py-2"
+        placeholder="Search a Mentor/Mentee by name or skill"
+        className="border border-purple-600 rounded px-4 py-2 w-72 text-center"
       />
       <button
         onClick={handleSearch}
-        className="ml-2 bg-purple-500 text-white px-4 py-2 rounded"
+        className="bg-purple-500 text-white px-8 py-2 rounded-md hover:bg-purple-600 text-sm ml-4"
       >
         Search
       </button>

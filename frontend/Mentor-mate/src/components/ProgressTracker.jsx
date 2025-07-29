@@ -232,7 +232,7 @@ const ProgressTracker = () => {
   }
 
   return (
-    <div className="flex-1 bg-white rounded-lg shadow-md p-6">
+    <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-purple-600">My Progress</h2>
         <div className="flex gap-2">

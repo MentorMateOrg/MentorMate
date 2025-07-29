@@ -11,6 +11,7 @@ import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
 import GroupMentorship from "./components/GroupMentorship";
 import Footer from "./components/Footer";
+import { InteractiveCursor } from "./components/CursorEffects";
 import { API_URL } from "./config.js";
 
 const steps = {
@@ -97,6 +98,7 @@ export default function PagesContainer() {
 
   return (
     <div className="min-h-screen flex flex-col">
+     <InteractiveCursor />
       <Router>
         <div className="flex-1">
           <Routes>

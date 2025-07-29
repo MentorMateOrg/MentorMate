@@ -173,7 +173,7 @@ const CommunityArticles = () => {
   }
 
   return (
-    <div className="flex-1 bg-white rounded-lg shadow-md p-6">
+    <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-purple-600">
           Community Articles

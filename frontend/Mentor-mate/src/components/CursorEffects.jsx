@@ -95,7 +95,7 @@ export function ButtonHoverEffect({ children, className = "", ...props }) {
 export function CardHoverEffect({ children, className = "", ...props }) {
   return (
     <div
-      className={`cursor-hover transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:-translate-y-1 ${className}`}
+      className={`cursor-hover transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:-translate-y-1 group ${className}`}
       {...props}
     >
       {children}
