@@ -1,4 +1,8 @@
-import { OP_RETAIN, OP_INSERT, OP_DELETE } from '../constants/operationTypes.js';
+import {
+  OP_RETAIN,
+  OP_INSERT,
+  OP_DELETE,
+} from "../constants/operationTypes.js";
 
 /**
  * Apply operations to a text string
@@ -7,13 +11,13 @@ import { OP_RETAIN, OP_INSERT, OP_DELETE } from '../constants/operationTypes.js'
  * @returns {string} - The resulting text after applying operations
  */
 export function applyOperations(text, operations) {
-  let result = '';
+  let result = "";
   let textIndex = 0;
 
   for (const op of operations) {
     if (op.type === OP_RETAIN) {
       if (textIndex + op.count > text.length) {
-        throw new Error('Cannot retain past end of text');
+        throw new Error("Cannot retain past end of text");
       }
       result += text.substring(textIndex, textIndex + op.count);
       textIndex += op.count;
@@ -21,7 +25,7 @@ export function applyOperations(text, operations) {
       result += op.chars;
     } else if (op.type === OP_DELETE) {
       if (textIndex + op.count > text.length) {
-        throw new Error('Cannot delete past end of text');
+        throw new Error("Cannot delete past end of text");
       }
       textIndex += op.count;
     }

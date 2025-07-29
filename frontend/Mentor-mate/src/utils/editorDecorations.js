@@ -10,16 +10,16 @@
 export function getUserColor(userId) {
   // List of distinct colors for different users
   const colors = [
-    '#FF6B6B', // Red
-    '#4ECDC4', // Teal
-    '#FFD166', // Yellow
-    '#6A0572', // Purple
-    '#1A535C', // Dark teal
-    '#FF9F1C', // Orange
-    '#2EC4B6', // Turquoise
-    '#E71D36', // Bright red
-    '#FF9F1C', // Orange
-    '#7209B7', // Violet
+    "#FF6B6B", // Red
+    "#4ECDC4", // Teal
+    "#FFD166", // Yellow
+    "#6A0572", // Purple
+    "#1A535C", // Dark teal
+    "#FF9F1C", // Orange
+    "#2EC4B6", // Turquoise
+    "#E71D36", // Bright red
+    "#FF9F1C", // Orange
+    "#7209B7", // Violet
   ];
 
   // Generate a number from the userId
@@ -49,7 +49,7 @@ export function createChangeDecorations(monaco, operations, userId, model) {
   const userColor = getUserColor(userId);
 
   for (const op of operations) {
-    if (op.type === 'insert') {
+    if (op.type === "insert") {
       // Convert position to line and column
       const startPos = model.getPositionAt(position);
       const endPos = model.getPositionAt(position + op.chars.length);
@@ -66,15 +66,16 @@ export function createChangeDecorations(monaco, operations, userId, model) {
           inlineClassName: `inserted-text-${userId}`,
           className: `inserted-text-bg-${userId}`,
           hoverMessage: { value: `Added by user ${userId}` },
-          stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+          stickiness:
+            monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
           minimap: {
             color: userColor,
-            position: monaco.editor.MinimapPosition.Inline
-          }
-        }
+            position: monaco.editor.MinimapPosition.Inline,
+          },
+        },
       });
       position += op.chars.length;
-    } else if (op.type === 'retain') {
+    } else if (op.type === "retain") {
       position += op.count;
     }
     // We don't create decorations for delete operations as the text is already gone
@@ -96,7 +97,7 @@ export function addUserHighlightStyles(userId, color) {
   }
 
   // Create style element
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.id = styleId;
   style.innerHTML = `
     .inserted-text-${userId} {
@@ -120,7 +121,13 @@ export function addUserHighlightStyles(userId, color) {
  * @param {Object} model - Monaco editor model
  * @returns {Object} - Editor decoration
  */
-export function createCursorDecoration(monaco, position, userId, userName, model) {
+export function createCursorDecoration(
+  monaco,
+  position,
+  userId,
+  userName,
+  model
+) {
   const userColor = getUserColor(userId);
   const pos = model.getPositionAt(position);
 
@@ -134,9 +141,10 @@ export function createCursorDecoration(monaco, position, userId, userName, model
     options: {
       className: `cursor-${userId}`,
       hoverMessage: { value: userName },
-      stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
-      beforeContentClassName: `cursor-flag-${userId}`
-    }
+      stickiness:
+        monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+      beforeContentClassName: `cursor-flag-${userId}`,
+    },
   };
 }
 
@@ -154,7 +162,7 @@ export function addUserCursorStyles(userId, color, userName) {
   }
 
   // Create style element
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.id = styleId;
   style.innerHTML = `
     .cursor-${userId} {

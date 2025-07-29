@@ -15,5 +15,19 @@ export default defineConfig(({ mode }) => ({
         },
       },
     }),
+    // Configure fallback for SPA routing in development
+    historyApiFallback: true,
+  },
+  // Configure fallback for SPA routing in production builds
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
+  // Configure preview server for production builds
+  preview: {
+    historyApiFallback: true,
   },
 }));
