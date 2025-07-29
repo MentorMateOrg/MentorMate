@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Onboarding from "./Onboarding";
-import Navbar from "../components/Navbar";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { API_URL } from "../config";
 
 function SignUp({ stepper }) {
@@ -43,9 +41,9 @@ function SignUp({ stepper }) {
             </h1>
             <p className="mb-4 text-center text-gray-500">
               Already have an account?{" "}
-              <a href="/login" className="text-purple-600 font-semibold">
+              <Link to="/login" className="text-purple-600 font-semibold">
                 Log in
-              </a>
+              </Link>
             </p>
             {stepper()}
             <div>

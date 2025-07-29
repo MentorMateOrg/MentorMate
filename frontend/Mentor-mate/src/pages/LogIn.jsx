@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { API_URL } from "../config";
 
 function LogIn() {
@@ -73,9 +73,9 @@ function LogIn() {
             </button>
             <p className="mb-4 text-center text-gray-500">
               Don't have an account?{" "}
-              <a href="/signup" className="text-purple-600 font-semibold">
+              <Link to="/signup" className="text-purple-600 font-semibold">
                 Sign Up
-              </a>
+              </Link>
             </p>
           </form>
         </div>
