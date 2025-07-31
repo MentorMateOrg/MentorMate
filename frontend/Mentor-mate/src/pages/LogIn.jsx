@@ -1,31 +1,40 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { API_URL } from "../config";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function LogIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleLogIn = async (form) => {
     form.preventDefault();
+    setIsLoading(true);
 
-    const response = await fetch(`${API_URL}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email, plainPassword: password }),
-    });
-    const data = await response.json();
-    if (response.ok && data?.token) {
-      localStorage.setItem("token", data.token);
-      window.dispatchEvent(new Event("userLogin"));
-      navigate("/dashboard");
-    } else {
-      alert("Login failed. Please check your credentials.");
+    try {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email, plainPassword: password }),
+      });
+      const data = await response.json();
+      if (response.ok && data?.token) {
+        localStorage.setItem("token", data.token);
+        window.dispatchEvent(new Event("userLogin"));
+        navigate("/dashboard");
+      } else {
+        alert("Login failed. Please check your credentials.");
+      }
+    } catch (err) {
+      alert("Login error: ", err);
+    } finally {
+      setIsLoading(false);
+      setEmail("");
+      setPassword("");
     }
-    setEmail("");
-    setPassword("");
   };
 
   return (
@@ -62,14 +71,21 @@ function LogIn() {
             </div>
             <button
               type="submit"
-              className={`w-full py-2 rounded-lg font-semibold border border-gray-300 mb-4 ${
-                email && password
+              className={`w-full py-2 rounded-lg font-semibold border border-gray-300 mb-4 flex items-center justify-center ${
+                email && password && !isLoading
                   ? "bg-white text-gray-500 hover:border-purple-600 cursor-pointer"
                   : "bg-white text-gray-300 cursor-not-allowed"
               }`}
-              disabled={!(email && password)}
+              disabled={!(email && password) || isLoading}
             >
-              Login
+              {isLoading ? (
+                <>
+                  <LoadingSpinner size="small" color="purple" />
+                  <span className="ml-2">Logging In...</span>
+                </>
+              ) : (
+                "Login"
+              )}
             </button>
             <p className="mb-4 text-center text-gray-500">
               Don't have an account?{" "}

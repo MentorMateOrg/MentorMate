@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { API_URL } from "../config";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function SignUp({ stepper }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleSignUp = async (form) => {
     form.preventDefault();
+    setIsLoading(true);
+
     try {
       const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
@@ -26,9 +30,11 @@ function SignUp({ stepper }) {
       }
     } catch (err) {
       alert("Sign up error: ", err);
+    } finally {
+      setIsLoading(false);
+      setEmail("");
+      setPassword("");
     }
-    setEmail("");
-    setPassword("");
   };
 
   return (
@@ -74,14 +80,21 @@ function SignUp({ stepper }) {
             </div>
             <button
               type="submit"
-              className={`w-full py-2 rounded-lg font-semibold border border-gray-300  ${
-                email && password
+              className={`w-full py-2 rounded-lg font-semibold border border-gray-300 flex items-center justify-center ${
+                email && password && !isLoading
                   ? "bg-white text-gray-500 hover:border-purple-600 cursor-pointer"
                   : "bg-white text-gray-300 cursor-not-allowed"
               }`}
-              disabled={!(email && password)}
+              disabled={!(email && password) || isLoading}
             >
-              Sign Up
+              {isLoading ? (
+                <>
+                  <LoadingSpinner size="small" color="purple" />
+                  <span className="ml-2">Creating Account...</span>
+                </>
+              ) : (
+                "Sign Up"
+              )}
             </button>
           </form>
         </div>

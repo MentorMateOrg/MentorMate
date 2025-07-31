@@ -12,6 +12,7 @@ import UserProfile from "./pages/UserProfile";
 import GroupMentorship from "./components/GroupMentorship";
 import Footer from "./components/Footer";
 import { InteractiveCursor } from "./components/CursorEffects";
+import { FullPageLoader } from "./components/LoadingSpinner";
 import { API_URL } from "./config.js";
 
 const steps = {
@@ -44,11 +45,13 @@ function stepper({ step }) {
 export default function PagesContainer() {
   const [role, setRole] = useState("");
   const [user, setUser] = useState("");
+  const [isAppLoading, setIsAppLoading] = useState(true);
 
   const fetchUser = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
       setUser("");
+      setIsAppLoading(false);
       return;
     }
 
@@ -70,6 +73,8 @@ export default function PagesContainer() {
       alert("Error fetching user data", err);
       localStorage.removeItem("token");
       setUser("");
+    } finally {
+      setIsAppLoading(false);
     }
   };
 
@@ -96,9 +101,14 @@ export default function PagesContainer() {
     };
   }, []);
 
+  // Show loading screen while app is initializing
+  if (isAppLoading) {
+    return <FullPageLoader text="Starting MentorMate..." />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
-     <InteractiveCursor />
+      <InteractiveCursor />
       <Router>
         <div className="flex-1">
           <Routes>
