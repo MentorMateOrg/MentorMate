@@ -1,58 +1,59 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { API_URL } from '../config';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 
-function MenteeOnboarding({role, setRole}) {
-    const [fullName, setFullName] = useState("");
-      const [linkedInUrl, setLinkedInUrl] = useState("");
-      const [githubUrl, setGithubUrl] = useState("");
-      const [techStack, setTechStack] = useState("");
-      const [profilePicUrl, setProfilePicUrl] = useState("");
-      const [fieldOfKnowledge, setFieldOfKnowledge] = useState("");
-      const [experiences, setExperiences] = useState([]);
-      const [selectedRole, setSelectedRole] = useState(role || "UNKNOWN");
+function MenteeOnboarding({ role, setRole }) {
+  const [fullName, setFullName] = useState("");
+  const [linkedInUrl, setLinkedInUrl] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [techStack, setTechStack] = useState("");
+  const [profilePicUrl, setProfilePicUrl] = useState("");
+  const [fieldOfKnowledge, setFieldOfKnowledge] = useState("");
+  const [experiences, setExperiences] = useState([]);
+  const [selectedRole, setSelectedRole] = useState(role || "UNKNOWN");
 
-      const navigate = useNavigate();
+  const navigate = useNavigate();
 
-      const handleExperienceChange = (e) => {
-        setExperiences(e.target.value.split(",").map((exp) => exp.trim()));
-      };
+  const handleExperienceChange = (e) => {
+    setExperiences(e.target.value.split(",").map((exp) => exp.trim()));
+  };
 
-      const handleOnboarding = async (onboarding) => {
-        onboarding.preventDefault();
-        const token = localStorage.getItem("token");
-        if (!token) {
-          alert("token not found ");
-          return;
-        }
-        const response = await fetch(`${API_URL}/api/profile/onboarding`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            fullName: fullName,
-            role: selectedRole,
-            profilePicUrl: profilePicUrl,
-            linkedInUrl: linkedInUrl,
-            githubUrl: githubUrl,
-            fieldOfKnowledge: fieldOfKnowledge,
-            experiences: experiences,
-            interests: techStack.split(",").map((interest) => interest.trim()),
-          }),
-        });
-        const user = await response.json();
-        if (response.ok) {
-          navigate("/dashboard");
-        } else {
-          alert("Error onboarding user");
-        }
-      };
+  const handleOnboarding = async (onboarding) => {
+    onboarding.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("token not found ");
+      return;
+    }
+    const response = await fetch(`${API_URL}/api/profile/onboarding`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        fullName: fullName,
+        role: selectedRole,
+        profilePicUrl: profilePicUrl,
+        linkedInUrl: linkedInUrl,
+        githubUrl: githubUrl,
+        fieldOfKnowledge: fieldOfKnowledge,
+        experiences: experiences,
+        interests: techStack.split(",").map((interest) => interest.trim()),
+      }),
+    });
+    const user = await response.json();
+    if (response.ok) {
+       window.dispatchEvent(new Event("userLogin"));
+      navigate("/dashboard");
+    } else {
+      alert("Error onboarding user");
+    }
+  };
 
-    return (
-        <>
- <>
+  return (
+    <>
+      <>
         <div className="min-h-screen flex items-center justify-center px-6">
           <div className="w-full max-w-xl bg-white shadow-lg rounded-xl p-8">
             <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
@@ -143,8 +144,8 @@ function MenteeOnboarding({role, setRole}) {
           </div>
         </div>
       </>
-        </>
-    )
+    </>
+  );
 }
 
-export default MenteeOnboarding
+export default MenteeOnboarding;

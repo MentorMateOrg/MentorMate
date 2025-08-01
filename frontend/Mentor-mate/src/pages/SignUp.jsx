@@ -24,6 +24,7 @@ function SignUp({ stepper }) {
       if (response.ok) {
         const token = user.token;
         localStorage.setItem("token", token);
+        window.dispatchEvent(new Event("userLogin"));
         navigate("/roleselect");
       } else {
         alert("Error signing up");
