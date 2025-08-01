@@ -7,9 +7,53 @@ const prisma = new PrismaClient();
 
 router.post("/request", authToken, async (req, res) => {
   const { receiverId } = req.body;
+
   try {
+    // Validate input
+    if (!receiverId) {
+      return res.status(400).json({ message: "Receiver ID is required" });
+    }
+
+    // Convert receiverId to integer if it's a string
+    const receiverIdInt = parseInt(receiverId);
+    if (isNaN(receiverIdInt)) {
+      return res.status(400).json({ message: "Invalid receiver ID" });
+    }
+
+    // Prevent sending request to yourself
+    if (req.user.id === receiverIdInt) {
+      return res
+        .status(400)
+        .json({ message: "Cannot send connection request to yourself" });
+    }
+
+    // Check if receiver exists
+    const receiver = await prisma.user.findUnique({
+      where: { id: receiverIdInt },
+    });
+
+    if (!receiver) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if a connection request already exists between these users
+    const existingRequest = await prisma.connectionRequest.findFirst({
+      where: {
+        OR: [
+          { senderId: req.user.id, receiverId: receiverIdInt },
+          { senderId: receiverIdInt, receiverId: req.user.id },
+        ],
+      },
+    });
+
+    if (existingRequest) {
+      return res
+        .status(409)
+        .json({ message: "Connection request already exists" });
+    }
+
     const request = await prisma.connectionRequest.create({
-      data: { senderId: req.user.id, receiverId },
+      data: { senderId: req.user.id, receiverId: receiverIdInt },
     });
     res.status(201).json({ message: "Request sent", request });
   } catch (err) {
